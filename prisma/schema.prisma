@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  // url is provided at runtime via prisma.config.ts (Prisma 7 pattern)
+  // In production this is a libsql:// URL; locally it is file:./dev.db
+}
+
+model User {
+  id        String        @id @default(cuid())
+  email     String        @unique
+  name      String?
+  password  String
+  createdAt DateTime      @default(now())
+  sessions  FlowSession[]
+  usage     UserUsage?
+}
+
+model FlowSession {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flowId      String
+  status      String    @default("IN_PROGRESS")
+  currentStep Int       @default(0)
+  answers     String    @default("{}")
+  aiOutputs   String    @default("{}")
+  summary     String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([userId, status])
+}
+
+model UserUsage {
+  userId        String   @id
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyAICalls  Int      @default(0)
+  dailyReset    DateTime @default(now())
+  totalSessions Int      @default(0)
+}
