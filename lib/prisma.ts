@@ -1,30 +1,11 @@
 import { PrismaClient } from '@/app/generated/prisma/client'
+import { PrismaLibSql } from '@prisma/adapter-libsql'
 
 function createPrismaClient() {
   const url = process.env.DATABASE_URL ?? 'file:./dev.db'
+  const authToken = process.env.TURSO_AUTH_TOKEN
 
-  // Production: Turso / libSQL
-  if (url.startsWith('libsql://') || url.startsWith('file:') === false) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { PrismaLibSQL } = require('@prisma/adapter-libsql')
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createClient } = require('@libsql/client')
-    const authToken = process.env.TURSO_AUTH_TOKEN
-    const client = createClient({ url, authToken })
-    const adapter = new PrismaLibSQL({ client })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new (PrismaClient as any)({ adapter })
-  }
-
-  // Local: SQLite via better-sqlite3
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3')
-  const path = require('path') as typeof import('path')
-  const dbUrl = url.replace('file:', '')
-  const absoluteDbPath = path.isAbsolute(dbUrl)
-    ? dbUrl
-    : path.join(process.cwd(), dbUrl.replace('./', ''))
-  const adapter = new PrismaBetterSqlite3({ url: absoluteDbPath })
+  const adapter = new PrismaLibSql({ url, authToken })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new (PrismaClient as any)({ adapter })
 }
