@@ -1,7 +1,7 @@
 # Relationship Coach — Project State
 
 > Αυτό το αρχείο είναι η "μνήμη" του project. Ενημερώνεται μετά από κάθε σημαντική αλλαγή.
-> Τελευταία ενημέρωση: 2026-04-29 (strict per-flow AI schemas + result renderers)
+> Τελευταία ενημέρωση: 2026-04-30 (Vercel deploy + Turso production DB)
 
 ---
 
@@ -14,20 +14,62 @@ Guided AI reflection and communication tool για personal relationships.
 
 ---
 
+## Deployment
+
+| | |
+|---|---|
+| **Production URL** | https://relationship-coach-red.vercel.app |
+| **GitHub** | https://github.com/orestismaths-lab/relationship-coach |
+| **Vercel project** | `relationship-coach` · team `orestismaths-labs-projects` |
+| **Turso DB** | `libsql://relationship-coach-orestismaths-lab.aws-eu-west-1.turso.io` |
+| **AI mode** | `MOCK_AI=true` (canned responses, no API key needed) |
+
+---
+
 ## Stack
 
 | Στοιχείο | Τεχνολογία |
 |---|---|
 | Framework | Next.js 16.2.4 (App Router) — **breaking changes vs παλαιότερες εκδόσεις** |
-| DB | SQLite (local) μέσω Prisma 7 + `@prisma/adapter-better-sqlite3` |
+| DB (local) | SQLite via `@prisma/adapter-libsql` + `@libsql/client` (`file:./dev.db`) |
+| DB (production) | Turso (libSQL) — `libsql://` URL + `TURSO_AUTH_TOKEN` |
 | Auth | NextAuth v4 (credentials) |
-| AI | Mock mode (`AI_MOCK=true`) · Real: Anthropic Claude API |
+| AI | Mock mode (`MOCK_AI=true`) · Real: Anthropic or OpenAI (`AI_PROVIDER`) |
 | Styling | Tailwind CSS v4 (CSS-first config, no `tailwind.config.ts`) |
-| Deploy | Vercel (προγραμματισμένο) |
+| Deploy | Vercel — live at `relationship-coach-red.vercel.app` |
 
-> **Prisma 7 breaking change**: το `url` στο datasource αφαιρέθηκε από το `schema.prisma`. Το connection URL ορίζεται στο `prisma.config.ts`. Ο `PrismaClient` χρειάζεται adapter.
+> **Prisma 7**: `url` αφαιρέθηκε από `schema.prisma`. Ορίζεται στο `prisma.config.ts`. `PrismaClient` χρειάζεται adapter.
+> **Next.js 16**: `params` / `searchParams` είναι Promises → `await params` / `use(params)`.
+> **libSQL adapter**: `PrismaLibSql` δέχεται απευθείας `{ url, authToken }` — δεν χρειάζεται `createClient` ξεχωριστά.
 
-> **Next.js 16 breaking change**: `params` και `searchParams` είναι Promises → πρέπει `await params` / `use(params)`.
+---
+
+## Environment Variables
+
+### Local (`.env.local`)
+```
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET="..."
+NEXTAUTH_URL="http://localhost:3000"
+MOCK_AI=true
+AI_PROVIDER=anthropic
+MAX_OUTPUT_TOKENS=1200
+AI_MAX_CALLS_PER_DAY=10
+```
+
+### Production (Vercel — encrypted)
+```
+DATABASE_URL=libsql://relationship-coach-orestismaths-lab.aws-eu-west-1.turso.io
+TURSO_AUTH_TOKEN=...
+NEXTAUTH_SECRET=...
+NEXTAUTH_URL=https://relationship-coach-red.vercel.app
+MOCK_AI=true
+AI_PROVIDER=anthropic
+MAX_OUTPUT_TOKENS=1200
+AI_MAX_CALLS_PER_DAY=10
+```
+
+**Για να πας live με real AI**: αλλαγή `MOCK_AI=false` + `ANTHROPIC_API_KEY=sk-ant-...` στο Vercel dashboard.
 
 ---
 
@@ -38,22 +80,25 @@ Guided AI reflection and communication tool για personal relationships.
 |---|---|
 | `prisma/schema.prisma` | DB schema (User, FlowSession, UserUsage) |
 | `prisma.config.ts` | Prisma 7 config — datasource URL + migrations path |
-| `.env.local` | Secrets (DATABASE_URL, NEXTAUTH_SECRET, AI_MOCK, AI_API_KEY) |
-| `next.config.ts` | `serverExternalPackages: ['better-sqlite3']` |
+| `.env.local` | Local secrets (gitignored) |
+| `next.config.ts` | `serverExternalPackages: ['better-sqlite3', '@libsql/client']` |
 | `app/globals.css` | Design tokens, animations (Tailwind v4 CSS-first) |
 
 ### Core lib
 | Αρχείο | Ρόλος |
 |---|---|
-| `lib/prisma.ts` | Prisma singleton με PrismaBetterSqlite3 adapter |
+| `lib/prisma.ts` | Prisma singleton με `PrismaLibSql` adapter (handles file: + libsql:) |
 | `lib/auth.ts` | NextAuth config (credentials, JWT, session callbacks) |
 | `lib/usage.ts` | Daily AI call limiter (default 10/day, resets at midnight) |
 | `lib/flows/definitions.ts` | Static definitions για τα 3 flows + βήματα |
 | `lib/flows/engine.ts` | Flow state machine (init, advance, serialize, deserialize) |
-| `lib/ai/safety.ts` | Keyword safety check (crisis / manipulation / abuse) |
-| `lib/ai/prompts.ts` | 6 AI prompts (structured JSON output) |
-| `lib/ai/mock.ts` | Mock responses για όλα τα prompt keys |
-| `lib/ai/client.ts` | AI dispatcher (mock ή real ανάλογα με AI_MOCK) |
+| `lib/ai/safety.ts` | Per-step keyword safety check (crisis / manipulation / abuse) |
+| `lib/ai/classifier.ts` | Pre-generation safety classifier (SAFE/SENSITIVE/HIGH_RISK/BLOCKED) |
+| `lib/ai/prompts.ts` | Global system prompt + 3 per-flow prompt builders |
+| `lib/ai/providers.ts` | Anthropic + OpenAI provider call logic |
+| `lib/ai/validate.ts` | Runtime schema validation για όλα τα AI output types |
+| `lib/ai/mock.ts` | Mock responses για όλα τα flows |
+| `lib/ai/client.ts` | AI orchestrator (classify → mock/real → validate) |
 
 ### Pages
 | Route | Αρχείο | Περιγραφή |
@@ -62,7 +107,7 @@ Guided AI reflection and communication tool για personal relationships.
 | `/login` | `app/(auth)/login/page.tsx` | Login |
 | `/register` | `app/(auth)/register/page.tsx` | Register |
 | `/dashboard` | `app/(app)/dashboard/page.tsx` | Flow selection + safety note |
-| `/flows/[flowId]` | `app/(app)/flows/[flowId]/page.tsx` | Flow runner |
+| `/flows/[flowId]` | `app/(app)/flows/[flowId]/page.tsx` | Chat flow runner |
 | `/flows/[flowId]/complete` | `app/(app)/flows/[flowId]/complete/page.tsx` | Result/summary |
 | `/history` | `app/(app)/history/page.tsx` | Past sessions |
 | `/settings` | `app/(app)/settings/page.tsx` | Settings placeholder |
@@ -74,23 +119,23 @@ Guided AI reflection and communication tool για personal relationships.
 | `/api/auth/register` | POST | Δημιουργία account |
 | `/api/flows` | POST | Start new flow session |
 | `/api/flows` | GET | List user sessions |
-| `/api/flows/[sessionId]/step` | POST | Submit step answer → safety check → AI if needed |
+| `/api/flows/[sessionId]/step` | POST | Submit step → classify → safety → AI if needed |
 | `/api/flows/[sessionId]/complete` | GET | Fetch completed session data |
 
 ### UI Components
 | Αρχείο | Ρόλος |
 |---|---|
-| `components/ui/Button.tsx` | Button (primary/secondary/ghost/danger, sm/md/lg) |
+| `components/ui/Button.tsx` | Button variants |
 | `components/ui/Card.tsx` | White card με border/shadow |
 | `components/ui/Alert.tsx` | Error/success/info/warning messages |
 | `components/ui/ProgressBar.tsx` | Step progress indicator |
 | `components/layout/Navbar.tsx` | Top nav (Home / History / Settings / Sign out) |
 | `components/flows/FlowCard.tsx` | Dashboard card για κάθε flow |
-| `components/flows/FlowRunner.tsx` | Orchestrates step rendering + API calls (auto-submits summary step) |
-| `components/flows/steps/TextInputStep.tsx` | Textarea — uses `step.placeholder`, disabled if empty |
-| `components/flows/steps/SingleSelectStep.tsx` | Vertical button list — ⚠ styling for safetyTriggerValues |
-| `components/flows/steps/MultiSelectStep.tsx` | Pill multi-select — "Skip" button if `!step.required` |
-| `components/flows/steps/EmotionPickerStep.tsx` | Emotion pills (rose accent) |
+| `components/flows/ChatRunner.tsx` | Conversational chat UI (replaces form-based FlowRunner) |
+| `components/flows/results/ResultCard.tsx` | Shared card + list primitives για result renderers |
+| `components/flows/results/UnderstandResult.tsx` | Renderer για UnderstandOutput |
+| `components/flows/results/PrepareResult.tsx` | Renderer για PrepareOutput (4 message versions) |
+| `components/flows/results/DecideResult.tsx` | Renderer για DecideOutput (trade-offs, options) |
 | `components/SafetyBanner.tsx` | Crisis/safety message with resources |
 | `components/SessionProvider.tsx` | NextAuth session wrapper |
 | `contexts/ToastContext.tsx` | Toast notifications |
@@ -173,11 +218,23 @@ DecideOutput = {
 ```
 Type guards: `isUnderstandOutput`, `isPrepareOutput`, `isDecideOutput` in `types/index.ts`.
 
-### Safety pipeline
-1. **Text input**: keyword filter (crisis / manipulation / abuse) before AI call
-2. **Select input**: `safetyTriggerValues` on step definition — specific answer values trigger ban
-3. **Usage limit**: checked before AI call (default: 10 AI steps/day, env: `AI_MAX_CALLS_PER_DAY`)
-4. **Conversation safety banner** uses domestic violence resources (different from crisis banner)
+### Safety pipeline (in order)
+1. **Per-step keyword filter** (`lib/ai/safety.ts`) — runs on every text input before saving
+2. **`safetyTriggerValues`** on select steps — specific answers (e.g. DV concern) → banner immediately
+3. **Pre-generation classifier** (`lib/ai/classifier.ts`) — classifies full answer set before AI call:
+   - `SAFE` → proceed
+   - `SENSITIVE` → proceed with caution
+   - `HIGH_RISK` → return crisis fallback, no AI call
+   - `BLOCKED` → return blocked fallback, no AI call
+4. **Usage limit** — checked before AI call (default 10/day, env: `AI_MAX_CALLS_PER_DAY`)
+5. **Response validation** (`lib/ai/validate.ts`) — schema check before returning to frontend
+
+### Classifier signals (18 rules)
+| Class | Signals |
+|---|---|
+| BLOCKED | manipulation_tactics, surveillance, threats_coercion, physical_harm_intent, sexual_coercion, illegal_activity |
+| HIGH_RISK | self_harm_suicidal, immediate_danger, domestic_violence, coercive_control, sexual_abuse, fear_of_partner, child_safety |
+| SENSITIVE | anger_intense, hopelessness, harassment_received, infidelity, substance_abuse |
 
 ---
 
@@ -186,8 +243,9 @@ Type guards: `isUnderstandOutput`, `isPrepareOutput`, `isDecideOutput` in `types
 **Palette**: stone-50 background · white cards · indigo-600 primary · stone text
 **Typography**: Geist (variable font `--font-geist`)
 **Accents per flow**: understand=indigo · prepare=violet · decide=teal
-**Emotions**: rose accent · Needs: teal accent
-**Animations**: `animate-slide-up` (page/step transitions) · `animate-fade-in` (toasts)
+**Emotions**: rose accent
+**Chat UI**: AI bubbles left (stone-100) · User bubbles right (indigo-600) · animated typing dots
+**Animations**: `animate-slide-up` (page transitions) · `animate-fade-in` (toasts) · bounce dots (chat typing)
 
 ---
 
@@ -199,63 +257,55 @@ FlowSession  { id, userId, flowId, status, currentStep, answers (JSON), aiOutput
 UserUsage    { userId (PK), dailyAICalls, dailyReset, totalSessions }
 ```
 
-`answers` και `aiOutputs` αποθηκεύονται ως JSON strings (SQLite limitation).
+`answers` και `aiOutputs` αποθηκεύονται ως JSON strings.
+Indexes: `FlowSession(userId)`, `FlowSession(userId, status)`.
 
 ---
 
 ## Business Rules
 
 - Κάθε flow ξεκινά νέα `FlowSession` (δεν γίνεται resume ακόμα)
-- AI steps μετρούν ως 1 call στο daily limit
-- Safety check πάντα πριν το AI call — αν fail, επιστρέφει `{ type: 'safety' }` χωρίς AI call
-- Mock mode: `AI_MOCK=true` → instant canned responses, χωρίς API key
-- Prisma 7: `status` field ως string (όχι enum) λόγω SQLite
+- AI generation μετράει ως 1 call στο daily limit
+- Safety classifier τρέχει πάντα πριν το AI call — HIGH_RISK/BLOCKED επιστρέφουν fallback χωρίς generation
+- Mock mode: `MOCK_AI=true` → instant canned responses, χωρίς API key
+- `lib/prisma.ts` χρησιμοποιεί `PrismaLibSql` για όλα τα environments (file: locally, libsql:// production)
 
 ---
 
-## Ολοκληρωμένα Features (MVP)
+## Ολοκληρωμένα Features
 
 - [x] Next.js 16 project setup (Prisma 7, NextAuth, Tailwind v4)
 - [x] Auth: register, login, session guard, JWT callbacks
-- [x] DB schema + migration (SQLite via better-sqlite3 adapter)
-- [x] 3 flows fully defined με typed steps
+- [x] DB schema + migration + indexes
+- [x] 3 flows fully defined με typed steps και placeholders
 - [x] Flow engine (state machine, serialize/deserialize)
-- [x] Safety system (keyword filter, 3 categories, crisis resources)
-- [x] Mock AI mode (6 realistic canned responses)
-- [x] Real AI client (Anthropic API, structured JSON parsing)
+- [x] Conversational chat UI (ChatRunner) — AI + user bubbles, typing indicator
+- [x] Per-step keyword safety check (3 categories, crisis resources)
+- [x] Pre-generation safety classifier (4 classes, 18 signal rules, 27 tests — `npm run test:classifier`)
+- [x] Global system prompt + per-flow prompt builders
+- [x] Provider layer: Anthropic + OpenAI placeholder (`AI_PROVIDER` env var)
+- [x] Mock AI mode (`MOCK_AI=true`, 3 realistic per-schema responses)
+- [x] Strict per-flow AI output schemas: `UnderstandOutput`, `PrepareOutput`, `DecideOutput`
+- [x] Runtime response validation before returning to frontend
+- [x] Result renderer components (section-based, scannable — trade-offs, message versions, etc.)
+- [x] Complete page: picks correct renderer per flowId with type guard validation
+- [x] History page (session list, status badges)
+- [x] Settings page (shows AI mode + provider)
 - [x] Daily usage limiter (configurable via `AI_MAX_CALLS_PER_DAY`)
-- [x] API routes (register, start flow, submit step, get complete)
-- [x] All 8 step component types
-- [x] FlowRunner orchestrator
-- [x] Landing page (exact spec copy, calm hero, safety note)
-- [x] Dashboard (flow selection, greeting, safety disclaimer)
-- [x] Flow runner page (breadcrumb, accent dot, loading state)
-- [x] Result/complete page (structured cards, sections, next steps)
-- [x] History page (session list, status badges, accent dots)
-- [x] Settings placeholder (account, privacy, about, safety note)
-- [x] Navbar (Home/History/Settings/Sign out, active state)
 - [x] Toast notifications
-- [x] Safety banner (crisis resources display)
-- [x] Build verified: 0 TypeScript errors, 14 routes
-- [x] Guided forms: 3 flows fully implemented with spec-exact fields
-- [x] Validation: all required fields disable Continue until filled
-- [x] Placeholders: every text field has a specific, helpful example
-- [x] Safety-flagged selects: ⚠ styling + banner on trigger value selection
-- [x] Optional multi-select (want_to_avoid): Skip button when nothing selected
-- [x] Summary auto-submit: FlowRunner auto-submits the final step, shows spinner during AI generation
-- [x] Mock responses: realistic, field-specific summaries for all 3 flows
-- [x] Strict per-flow AI output schemas: `UnderstandOutput`, `PrepareOutput`, `DecideOutput` with TypeScript types + type guards
-- [x] Prompts updated to return structured JSON matching schemas exactly
-- [x] Result renderer components: `UnderstandResult`, `PrepareResult`, `DecideResult` (section-based, scannable UI)
-- [x] Complete page: picks correct renderer per flowId with runtime validation via type guards
-- [x] Removed generic `AISummaryOutput` — replaced with `FlowAIOutput` union type
+- [x] Safety banner (crisis + DV resources)
+- [x] Turso production DB (libSQL) — `@prisma/adapter-libsql`, static imports, Vercel-compatible
+- [x] GitHub repo: https://github.com/orestismaths-lab/relationship-coach
+- [x] Vercel deploy: https://relationship-coach-red.vercel.app
+- [x] Build: 0 TypeScript errors, 14 routes, `prisma generate && next build`
+
+---
 
 ## Ανοιχτά / Εκκρεμή
 
-- [ ] Real AI API key integration (set `AI_MOCK=false` + `AI_API_KEY`)
+- [ ] Real AI API key (`MOCK_AI=false` + `ANTHROPIC_API_KEY` στο Vercel dashboard)
+- [ ] Custom domain (αν χρειαστεί)
 - [ ] Session resume (αν ο χρήστης φύγει και επιστρέψει)
-- [ ] Turso production DB migration (αντί SQLite)
-- [ ] Vercel deployment setup
 - [ ] Change password (settings)
 - [ ] Delete account / delete sessions (settings)
 - [ ] Export data (settings)
