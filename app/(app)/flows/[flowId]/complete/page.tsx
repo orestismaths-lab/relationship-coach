@@ -51,7 +51,8 @@ export default async function CompletePage(props: {
   if (!flow) redirect('/dashboard')
 
   const aiOutputs = JSON.parse(flowSession.aiOutputs) as Record<string, FlowAIOutput>
-  const output = aiOutputs['summary'] as FlowAIOutput | undefined
+  const summaryStepId = flow.steps.find((s) => s.type === 'summary')?.id ?? 'summary'
+  const output = aiOutputs[summaryStepId] as FlowAIOutput | undefined
 
   return (
     <div className="space-y-8 animate-slide-up">

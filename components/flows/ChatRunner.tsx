@@ -301,15 +301,24 @@ export function ChatRunner({ flow, sessionId, initialStep, totalSteps }: Props) 
           setMessages((m) => m.filter((x) => x.role !== 'spinner'))
           setGenerating(true)
           setLoading(false)
-          const genRes = await fetch(`/api/flows/${sessionId}/step`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ stepId: nextStep.id, answer: '' }),
-          })
-          const genData = await genRes.json()
-          setGenerating(false)
-          if (genData.type === 'complete') {
-            router.push(`/flows/${flow.id}/complete?session=${sessionId}`)
+          try {
+            const genRes = await fetch(`/api/flows/${sessionId}/step`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ stepId: nextStep.id, answer: '' }),
+            })
+            const genData = await genRes.json()
+            setGenerating(false)
+            if (genData.type === 'complete') {
+              router.push(`/flows/${flow.id}/complete?session=${sessionId}`)
+            } else if (genData.type === 'safety') {
+              setSafetyMessage(genData.message)
+            } else if (!genRes.ok) {
+              setError(genData.error ?? 'Could not generate your reflection. Please try again.')
+            }
+          } catch {
+            setGenerating(false)
+            setError('Network error. Please try again.')
           }
           return
         }
