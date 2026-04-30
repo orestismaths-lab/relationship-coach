@@ -1,26 +1,21 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { LangToggle } from '@/components/ui/LangToggle'
 
 export function Navbar() {
   const { data: session } = useSession()
   const pathname = usePathname()
-  const router = useRouter()
-  const { t, lang, setLang } = useLanguage()
+  const { t } = useLanguage()
 
   const navLinks = [
     { href: '/dashboard', label: t.nav.home },
     { href: '/history',   label: t.nav.history },
     { href: '/settings',  label: t.nav.settings },
   ]
-
-  function toggleLang() {
-    setLang(lang === 'en' ? 'el' : 'en')
-    router.refresh()
-  }
 
   return (
     <header className="border-b border-stone-200 bg-white sticky top-0 z-10">
@@ -50,14 +45,7 @@ export function Navbar() {
             )
           })}
 
-          {/* Language toggle */}
-          <button
-            onClick={toggleLang}
-            className="ml-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer tabular-nums"
-            title={lang === 'en' ? 'Switch to Greek' : 'Switch to English'}
-          >
-            {t.nav.switchLang}
-          </button>
+          <LangToggle className="ml-1" />
 
           {session && (
             <button

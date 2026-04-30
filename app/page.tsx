@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getServerT, getServerLang } from '@/lib/i18n/server'
 import { getFlowT } from '@/lib/i18n/flowTranslations'
+import { LangToggle } from '@/components/ui/LangToggle'
 
 export default async function LandingPage() {
   const t = await getServerT()
@@ -20,6 +21,7 @@ export default async function LandingPage() {
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
           <span className="text-sm font-semibold tracking-tight text-stone-800">{t.nav.brand}</span>
           <div className="flex items-center gap-2">
+            <LangToggle />
             <Link href="/login" className="rounded-lg px-3.5 py-1.5 text-sm text-stone-600 hover:bg-stone-100 transition-colors">
               {l.signIn}
             </Link>
