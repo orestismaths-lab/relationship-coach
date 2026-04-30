@@ -5,34 +5,25 @@ const accents: Record<string, {
   badge: string
   bar: string
   hover: string
-  label: string
 }> = {
-  understand: {
-    badge: 'bg-indigo-50 text-indigo-600',
-    bar:   'bg-indigo-400',
-    hover: 'hover:border-indigo-200',
-    label: 'Understand',
-  },
-  prepare: {
-    badge: 'bg-violet-50 text-violet-600',
-    bar:   'bg-violet-400',
-    hover: 'hover:border-violet-200',
-    label: 'Prepare',
-  },
-  decide: {
-    badge: 'bg-teal-50 text-teal-600',
-    bar:   'bg-teal-400',
-    hover: 'hover:border-teal-200',
-    label: 'Decide',
-  },
+  understand: { badge: 'bg-indigo-50 text-indigo-600', bar: 'bg-indigo-400', hover: 'hover:border-indigo-200' },
+  prepare:    { badge: 'bg-violet-50 text-violet-600', bar: 'bg-violet-400', hover: 'hover:border-violet-200' },
+  decide:     { badge: 'bg-teal-50 text-teal-600',     bar: 'bg-teal-400',   hover: 'hover:border-teal-200'   },
 }
 
 interface Props {
   flow: FlowDefinition
+  titleOverride?: string
+  taglineOverride?: string
+  minutesOverride?: number
+  startLabel?: string
 }
 
-export function FlowCard({ flow }: Props) {
+export function FlowCard({ flow, titleOverride, taglineOverride, minutesOverride, startLabel = 'Start →' }: Props) {
   const a = accents[flow.id] ?? accents.understand
+  const title = titleOverride ?? flow.title
+  const tagline = taglineOverride ?? flow.tagline
+  const minutes = minutesOverride ?? flow.estimatedMinutes
 
   return (
     <Link href={`/flows/${flow.id}`} className="group block">
@@ -41,20 +32,20 @@ export function FlowCard({ flow }: Props) {
       >
         <div className="flex items-start justify-between mb-4">
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${a.badge}`}>
-            {a.label}
+            {flow.id.charAt(0).toUpperCase() + flow.id.slice(1)}
           </span>
-          <span className="text-xs text-stone-400">~{flow.estimatedMinutes} min</span>
+          <span className="text-xs text-stone-400">~{minutes} min</span>
         </div>
 
         <div className="space-y-1.5 mb-5">
-          <h3 className="text-sm font-semibold text-stone-900">{flow.title}</h3>
-          <p className="text-sm text-stone-500 leading-relaxed">{flow.tagline}</p>
+          <h3 className="text-sm font-semibold text-stone-900">{title}</h3>
+          <p className="text-sm text-stone-500 leading-relaxed">{tagline}</p>
         </div>
 
         <div className="flex items-center justify-between">
           <div className={`h-0.5 w-8 rounded-full ${a.bar}`} />
           <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors">
-            Start →
+            {startLabel}
           </span>
         </div>
       </div>

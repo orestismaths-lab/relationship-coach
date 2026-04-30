@@ -7,9 +7,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { Card } from '@/components/ui/Card'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,7 +22,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setError(null)
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+      setError(t.auth.register.passwordError)
       return
     }
     setLoading(true)
@@ -33,7 +35,7 @@ export default function RegisterPage() {
     const data = await res.json()
 
     if (!res.ok) {
-      setError(data.error ?? 'Registration failed.')
+      setError(data.error ?? t.auth.register.failed)
       setLoading(false)
       return
     }
@@ -46,15 +48,15 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
-          <p className="mt-1 text-sm text-gray-500">Free to use. No card required.</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.auth.register.title}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t.auth.register.subtitle}</p>
         </div>
 
         <Card>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && <Alert type="error">{error}</Alert>}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Name (optional)</label>
+              <label className="text-sm font-medium text-gray-700">{t.auth.register.name}</label>
               <input
                 type="text"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
@@ -63,7 +65,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Email</label>
+              <label className="text-sm font-medium text-gray-700">{t.auth.register.email}</label>
               <input
                 type="email"
                 required
@@ -73,7 +75,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Password</label>
+              <label className="text-sm font-medium text-gray-700">{t.auth.register.password}</label>
               <input
                 type="password"
                 required
@@ -82,18 +84,18 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <p className="text-xs text-gray-400">At least 8 characters</p>
+              <p className="text-xs text-gray-400">{t.auth.register.passwordHint}</p>
             </div>
             <Button type="submit" loading={loading} className="w-full">
-              Create account
+              {t.auth.register.submit}
             </Button>
           </form>
         </Card>
 
         <p className="text-center text-sm text-gray-500">
-          Already have an account?{' '}
+          {t.auth.register.hasAccount}{' '}
           <Link href="/login" className="text-indigo-600 hover:underline font-medium">
-            Sign in
+            {t.auth.register.signIn}
           </Link>
         </p>
       </div>

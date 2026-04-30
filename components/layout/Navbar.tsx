@@ -1,18 +1,26 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export function Navbar() {
   const { data: session } = useSession()
   const pathname = usePathname()
+  const router = useRouter()
+  const { t, lang, setLang } = useLanguage()
 
   const navLinks = [
-    { href: '/dashboard', label: 'Home' },
-    { href: '/history',   label: 'History' },
-    { href: '/settings',  label: 'Settings' },
+    { href: '/dashboard', label: t.nav.home },
+    { href: '/history',   label: t.nav.history },
+    { href: '/settings',  label: t.nav.settings },
   ]
+
+  function toggleLang() {
+    setLang(lang === 'en' ? 'el' : 'en')
+    router.refresh()
+  }
 
   return (
     <header className="border-b border-stone-200 bg-white sticky top-0 z-10">
@@ -21,7 +29,7 @@ export function Navbar() {
           href="/dashboard"
           className="text-sm font-semibold tracking-tight text-stone-800 hover:text-indigo-600 transition-colors"
         >
-          Relationship Coach
+          {t.nav.brand}
         </Link>
 
         <nav className="flex items-center gap-1">
@@ -41,12 +49,22 @@ export function Navbar() {
               </Link>
             )
           })}
+
+          {/* Language toggle */}
+          <button
+            onClick={toggleLang}
+            className="ml-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer tabular-nums"
+            title={lang === 'en' ? 'Switch to Greek' : 'Switch to English'}
+          >
+            {t.nav.switchLang}
+          </button>
+
           {session && (
             <button
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="ml-2 rounded-lg px-3 py-1.5 text-sm text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+              className="ml-1 rounded-lg px-3 py-1.5 text-sm text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
             >
-              Sign out
+              {t.nav.signOut}
             </button>
           )}
         </nav>

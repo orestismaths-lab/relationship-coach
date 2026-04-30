@@ -5,19 +5,22 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getFlow } from '@/lib/flows/definitions'
 import { deserializeState, serializeState, advanceStep, recordAIOutput } from '@/lib/flows/engine'
-import { safetyCheck, SAFETY_MESSAGES } from '@/lib/ai/safety'
+import { safetyCheck, getSafetyMessage, getConversationSafetyMessage } from '@/lib/ai/safety'
 import { generateAI } from '@/lib/ai/client'
 import { checkAndIncrementUsage } from '@/lib/usage'
 import type { PromptKey } from '@/lib/ai/prompts'
 import type { SessionAnswers } from '@/types'
+import type { Lang } from '@/lib/i18n/translations'
 
 const schema = z.object({
   stepId: z.string(),
   answer: z.union([z.string(), z.array(z.string()), z.number()]),
 })
 
-const SAFETY_CONVERSATION_MESSAGE =
-  "Your safety matters more than this conversation. If you're in a situation that could be physically or emotionally unsafe, please prioritize your wellbeing. **National Domestic Violence Hotline (US):** 1-800-799-7233 · **Crisis Text Line:** Text HOME to 741741 · **UK: Refuge** 0808 2000 247. Please reach out to someone you trust or a professional before proceeding."
+function getLang(req: NextRequest): Lang {
+  const h = req.headers.get('x-lang')
+  return h === 'el' ? 'el' : 'en'
+}
 
 export async function POST(
   req: NextRequest,
@@ -28,6 +31,7 @@ export async function POST(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const lang = getLang(req)
   const { sessionId } = await params
   const body = await req.json().catch(() => null)
   const parsed = schema.safeParse(body)
@@ -64,17 +68,13 @@ export async function POST(
   if (typeof answer === 'string' && answer.trim().length > 0) {
     const safety = safetyCheck(answer)
     if (!safety.safe) {
-      const msg = SAFETY_MESSAGES[safety.reason ?? 'default'] ?? SAFETY_MESSAGES.default
-      return Response.json({ type: 'safety', message: msg })
+      return Response.json({ type: 'safety', message: getSafetyMessage(safety.reason, lang) })
     }
   }
 
-  // Safety check on select answers flagged in the step definition
-  if (
-    typeof answer === 'string' &&
-    stepDef.safetyTriggerValues?.includes(answer)
-  ) {
-    return Response.json({ type: 'safety', message: SAFETY_CONVERSATION_MESSAGE })
+  // Safety trigger values on select steps
+  if (typeof answer === 'string' && stepDef.safetyTriggerValues?.includes(answer)) {
+    return Response.json({ type: 'safety', message: getConversationSafetyMessage(lang) })
   }
 
   // AI step: generate summary

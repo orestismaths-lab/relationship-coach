@@ -1,7 +1,7 @@
 # Relationship Coach — Project State
 
 > Αυτό το αρχείο είναι η "μνήμη" του project. Ενημερώνεται μετά από κάθε σημαντική αλλαγή.
-> Τελευταία ενημέρωση: 2026-04-30 (Vercel deploy + Turso production DB)
+> Τελευταία ενημέρωση: 2026-04-30 (bilingual EN/EL)
 
 ---
 
@@ -298,6 +298,20 @@ Indexes: `FlowSession(userId)`, `FlowSession(userId, status)`.
 - [x] GitHub repo: https://github.com/orestismaths-lab/relationship-coach
 - [x] Vercel deploy: https://relationship-coach-red.vercel.app
 - [x] Build: 0 TypeScript errors, 14 routes, `prisma generate && next build`
+- [x] Bilingual EN/EL — language switcher στο Navbar, cookie-based persistence, server + client components translated, flow questions/options/safety messages σε δύο γλώσσες
+- [x] Bug fix: generate step error handling (network error, non-OK, safety → σωστή αντίδραση αντί silent failure)
+- [x] Bug fix: complete page reads summary key δυναμικά από flow definition
+
+---
+
+## i18n Architecture
+
+- Cookie `lang` (en/el) — διαβάζεται από server components μέσω `getServerLang()` + από client μέσω `LanguageContext`
+- `lib/i18n/translations.ts` — όλα τα UI strings (nav, auth, dashboard, chat, history, settings, complete, safety, landing, results labels)
+- `lib/i18n/flowTranslations.ts` — flow questions/hints/placeholders/options per language. **Βασική αρχή**: option VALUES = English (stored στη DB + safety checks), option LABELS = translated (display only)
+- `lib/i18n/server.ts` — `getServerLang()`, `getServerT()` για server components
+- `contexts/LanguageContext.tsx` — client-side lang state, initialized από cookie + localStorage sync
+- Language switch → `setLang()` → cookie + localStorage + `router.refresh()` για re-render server components
 
 ---
 
@@ -312,3 +326,4 @@ Indexes: `FlowSession(userId)`, `FlowSession(userId, status)`.
 - [ ] Email verification (register)
 - [ ] Payments / premium tier
 - [ ] Mobile app
+- [ ] Landing page: language switcher (τώρα μόνο στο Navbar — η landing page δεν έχει Navbar)

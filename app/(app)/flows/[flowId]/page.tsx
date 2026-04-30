@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { ChatRunner } from '@/components/flows/ChatRunner'
 import { getFlow } from '@/lib/flows/definitions'
 import { Alert } from '@/components/ui/Alert'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { getFlowT } from '@/lib/i18n/flowTranslations'
 
 interface SessionData {
   sessionId: string
@@ -21,6 +23,8 @@ const accentDot: Record<string, string> = {
 export default function FlowPage({ params }: { params: Promise<{ flowId: string }> }) {
   const { flowId } = use(params)
   const flow = getFlow(flowId)
+  const { lang, t } = useLanguage()
+  const flowT = getFlowT(flowId, lang)
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
@@ -70,13 +74,13 @@ export default function FlowPage({ params }: { params: Promise<{ flowId: string 
           href="/dashboard"
           className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 transition-colors"
         >
-          ← Back
+          {t.chat.back}
         </Link>
         <div className="flex items-center gap-2">
           <div className={`h-2 w-2 rounded-full ${accentDot[flowId] ?? 'bg-indigo-400'}`} />
-          <h1 className="text-base font-semibold text-stone-900">{flow.title}</h1>
+          <h1 className="text-base font-semibold text-stone-900">{flowT?.title ?? flow.title}</h1>
         </div>
-        <p className="text-sm text-stone-500">{flow.tagline}</p>
+        <p className="text-sm text-stone-500">{flowT?.tagline ?? flow.tagline}</p>
       </div>
 
       <div className="border-t border-stone-100" />

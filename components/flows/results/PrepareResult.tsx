@@ -1,5 +1,8 @@
 import type { PrepareOutput } from '@/types'
+import type { T } from '@/lib/i18n/translations'
 import { ResultCard, BulletList, ArrowList, Prose } from './ResultCard'
+
+type Labels = T['results']['prepare']
 
 function MessageCard({ label, text, accent }: {
   label: string
@@ -17,43 +20,37 @@ function MessageCard({ label, text, accent }: {
   )
 }
 
-export function PrepareResult({ output }: { output: PrepareOutput }) {
+export function PrepareResult({ output, t }: { output: PrepareOutput; t: Labels }) {
   return (
     <div className="space-y-4">
-      {/* Goal */}
-      <ResultCard label="Conversation goal" accent="violet">
+      <ResultCard label={t.goal} accent="violet">
         <Prose text={output.conversationGoal} />
       </ResultCard>
 
-      {/* Recommended message */}
-      <MessageCard label="Recommended message" text={output.recommendedMessage} accent="violet" />
+      <MessageCard label={t.recommended} text={output.recommendedMessage} accent="violet" />
 
-      {/* Three versions */}
       <div className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 px-1">
-          Alternative versions
+          {t.alternatives}
         </p>
-        <MessageCard label="Softer — if you want to tread lightly" text={output.softerVersion} accent="stone" />
-        <MessageCard label="Direct — if you want to be clear" text={output.directVersion} accent="stone" />
-        <MessageCard label="Boundary-focused — if you need to centre yourself" text={output.boundaryFocusedVersion} accent="teal" />
+        <MessageCard label={t.softer} text={output.softerVersion} accent="stone" />
+        <MessageCard label={t.direct} text={output.directVersion} accent="stone" />
+        <MessageCard label={t.boundary} text={output.boundaryFocusedVersion} accent="teal" />
       </div>
 
-      {/* What to avoid */}
       {output.whatToAvoid.length > 0 && (
-        <ResultCard label="What to avoid" accent="amber">
+        <ResultCard label={t.avoid} accent="amber">
           <BulletList items={output.whatToAvoid} marker="✕" />
         </ResultCard>
       )}
 
-      {/* If they react badly */}
       {output.ifTheyReactBadly.length > 0 && (
-        <ResultCard label="If they react badly" accent="stone">
+        <ResultCard label={t.ifBad} accent="stone">
           <ArrowList items={output.ifTheyReactBadly} />
         </ResultCard>
       )}
 
-      {/* Follow-up */}
-      <ResultCard label="After the conversation" accent="violet">
+      <ResultCard label={t.followUp} accent="violet">
         <Prose text={output.followUpSuggestion} />
       </ResultCard>
     </div>

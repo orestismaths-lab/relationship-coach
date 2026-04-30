@@ -1,11 +1,16 @@
+'use client'
+
 import Link from 'next/link'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export function SafetyBanner({ message }: { message: string }) {
+  const { t } = useLanguage()
+
   return (
     <div className="space-y-5 animate-slide-up">
       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-amber-500">
-          We paused here
+          {t.safety.paused}
         </p>
         <p
           className="text-sm text-amber-900 leading-relaxed"
@@ -15,9 +20,9 @@ export function SafetyBanner({ message }: { message: string }) {
         />
       </div>
       <p className="text-sm text-stone-400 text-center">
-        You can close this tab or{' '}
+        {t.safety.closeOrReturn}{' '}
         <Link href="/dashboard" className="text-indigo-500 hover:underline">
-          return to home
+          {t.safety.returnHome}
         </Link>
         .
       </p>

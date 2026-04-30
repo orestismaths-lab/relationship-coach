@@ -7,9 +7,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { Card } from '@/components/ui/Card'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +28,7 @@ export default function LoginPage() {
 
     setLoading(false)
     if (result?.error) {
-      setError('Incorrect email or password.')
+      setError(t.auth.login.error)
     } else {
       router.push('/dashboard')
     }
@@ -36,15 +38,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-          <p className="mt-1 text-sm text-gray-500">Sign in to your account</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.auth.login.title}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t.auth.login.subtitle}</p>
         </div>
 
         <Card>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && <Alert type="error">{error}</Alert>}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Email</label>
+              <label className="text-sm font-medium text-gray-700">{t.auth.login.email}</label>
               <input
                 type="email"
                 required
@@ -54,7 +56,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Password</label>
+              <label className="text-sm font-medium text-gray-700">{t.auth.login.password}</label>
               <input
                 type="password"
                 required
@@ -64,15 +66,15 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" loading={loading} className="w-full">
-              Sign in
+              {t.auth.login.submit}
             </Button>
           </form>
         </Card>
 
         <p className="text-center text-sm text-gray-500">
-          No account?{' '}
+          {t.auth.login.noAccount}{' '}
           <Link href="/register" className="text-indigo-600 hover:underline font-medium">
-            Create one
+            {t.auth.login.createOne}
           </Link>
         </p>
       </div>

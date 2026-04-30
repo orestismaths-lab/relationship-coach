@@ -1,53 +1,54 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { getServerT } from '@/lib/i18n/server'
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions)
+  const t = await getServerT()
 
   return (
     <div className="space-y-8">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold text-stone-900">Settings</h1>
-        <p className="text-sm text-stone-500">Manage your account preferences.</p>
+        <h1 className="text-xl font-semibold text-stone-900">{t.settings.title}</h1>
+        <p className="text-sm text-stone-500">{t.settings.subtitle}</p>
       </div>
 
-      {/* Account section */}
       <section className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">Account</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">{t.settings.account}</p>
         <div className="rounded-2xl border border-stone-200 bg-white divide-y divide-stone-100 shadow-sm">
-          <SettingsRow label="Email" value={session?.user?.email ?? '—'} />
-          <SettingsRow label="Name" value={session?.user?.name ?? '—'} />
-          <SettingsRowButton label="Change password" action="Coming soon" />
-          <SettingsRowButton label="Delete account" action="Coming soon" danger />
+          <SettingsRow label={t.settings.email} value={session?.user?.email ?? '—'} />
+          <SettingsRow label={t.settings.name} value={session?.user?.name ?? '—'} />
+          <SettingsRowButton label={t.settings.changePassword} action={t.settings.comingSoon} />
+          <SettingsRowButton label={t.settings.deleteAccount} action={t.settings.comingSoon} danger />
         </div>
       </section>
 
-      {/* Privacy section */}
       <section className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">Privacy</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">{t.settings.privacy}</p>
         <div className="rounded-2xl border border-stone-200 bg-white divide-y divide-stone-100 shadow-sm">
-          <SettingsRowButton label="Export my data" action="Coming soon" />
-          <SettingsRowButton label="Delete all sessions" action="Coming soon" danger />
+          <SettingsRowButton label={t.settings.exportData} action={t.settings.comingSoon} />
+          <SettingsRowButton label={t.settings.deleteSessions} action={t.settings.comingSoon} danger />
         </div>
       </section>
 
-      {/* About section */}
       <section className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">About</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">{t.settings.about}</p>
         <div className="rounded-2xl border border-stone-200 bg-white divide-y divide-stone-100 shadow-sm">
-          <SettingsRow label="Version" value="MVP 0.1" />
-          <SettingsRow label="AI mode" value={process.env.MOCK_AI === 'true' ? 'Mock (no API calls)' : `Live · ${process.env.AI_PROVIDER ?? 'anthropic'}`} />
+          <SettingsRow label={t.settings.version} value="MVP 0.1" />
+          <SettingsRow
+            label={t.settings.aiMode}
+            value={process.env.MOCK_AI === 'true' ? t.settings.mockMode : `Live · ${process.env.AI_PROVIDER ?? 'anthropic'}`}
+          />
         </div>
       </section>
 
-      {/* Safety note */}
       <div className="rounded-xl border border-amber-100 bg-amber-50 px-5 py-4">
         <p className="text-xs text-amber-700 leading-relaxed">
-          <span className="font-semibold">Reminder:</span>{' '}
-          This tool supports reflection only. It is not therapy, crisis support, legal advice,
-          medical advice, or emergency help. If you are in crisis, contact{' '}
-          <span className="font-semibold">988</span> (US) or{' '}
-          <span className="font-semibold">116 123</span> (UK).
+          <span className="font-semibold">{t.dashboard.safetyLabel}</span>{' '}
+          {t.settings.safetyReminder}{' '}
+          {t.settings.crisisNote}{' '}
+          <span className="font-semibold">988</span> (US) ·{' '}
+          <span className="font-semibold">116 123</span> (EU).
         </p>
       </div>
     </div>
@@ -63,15 +64,7 @@ function SettingsRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function SettingsRowButton({
-  label,
-  action,
-  danger,
-}: {
-  label: string
-  action: string
-  danger?: boolean
-}) {
+function SettingsRowButton({ label, action, danger }: { label: string; action: string; danger?: boolean }) {
   return (
     <div className="flex items-center justify-between px-5 py-4">
       <span className={`text-sm ${danger ? 'text-red-500' : 'text-stone-700'}`}>{label}</span>
