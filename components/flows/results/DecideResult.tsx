@@ -66,7 +66,7 @@ export function DecideResult({ output, t }: { output: DecideOutput; t: Labels })
         </div>
       )}
 
-      <ResultCard label={t.nextStep} accent="teal">
+      <ResultCard label={t.nextStep} accent="teal" copyText={output.recommendedLowRiskNextStep}>
         <Prose text={output.recommendedLowRiskNextStep} />
       </ResultCard>
 

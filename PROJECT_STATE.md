@@ -1,7 +1,7 @@
 # Relationship Coach — Project State
 
 > Αυτό το αρχείο είναι η "μνήμη" του project. Ενημερώνεται μετά από κάθε σημαντική αλλαγή.
-> Τελευταία ενημέρωση: 2026-05-01 (UI polish pass)
+> Τελευταία ενημέρωση: 2026-05-02
 
 ---
 
@@ -353,15 +353,16 @@ ALTER TABLE FlowSession ADD COLUMN title TEXT;
 - [x] **Classifier safety messages translated** — `highRisk` + `blocked` σε EN/EL, `generateAI` δέχεται `lang` parameter
 - [x] **LangToggle** — styled με flag emoji + border, ορατό σε landing/login/register/navbar
 - [x] **UI Polish pass** — color consistency (stone-* παντού, αφαίρεση gray-*), responsive result grids (`grid-cols-1 sm:grid-cols-2`), warmer safety labels (αφαίρεση uppercase/tracking-widest), backdrop-blur Navbar, `::selection` color, input transition, progress bar χωρίς `%`, sticky input separator, stone-based Alert info
+- [x] **AC #8 — Copy buttons** — `CopyButton` component (clipboard API + checkmark feedback), copy icon στο `ResultCard` header (optional `copyText` prop), wired σε nextStep/reframe cards (Understand + Decide)
+- [x] **AC #9 — Editable message drafts** — `PrepareResult` πλέον 'use client', όλα τα message cards (recommended, softer, direct, boundary) είναι editable textarea + copy button
+- [x] **AC #10 — Usage limit banner** — 429 ανιχνεύεται ξεχωριστά στο ChatRunner, εμφανίζεται dedicated banner αντί για generic error. Translation keys: `limitTitle` + `limitBody` (EN + EL)
 
 ---
 
 ## Ανοιχτά / Εκκρεμή
 
-### Acceptance Criteria — Ελλιπή
-- [ ] **AC #8 — Copy generated content**: Δεν υπάρχουν κουμπιά copy-to-clipboard στα result components. Χρήστης δεν μπορεί εύκολα να αντιγράψει draft μηνύματα ή summaries.
-- [ ] **AC #9 — Edit message outputs**: Τα message drafts στο PrepareResult (recommendedMessage, softerVersion, directVersion, boundaryFocusedVersion) είναι read-only. Δεν υπάρχει inline editing.
-- [ ] **AC #10 (partial) — Usage limit errors**: Το 429 error εμφανίζεται σαν γενικό error χωρίς διαφοροποίηση. Ο χρήστης βλέπει το μήνυμα αλλά χωρίς ξεχωριστό styling για limit-reached.
+### Acceptance Criteria — Εκκρεμή (minor)
+- [ ] **AC #8 partial** — Copy για list items (BulletList/ArrowList) — δεν υλοποιήθηκε, χαμηλή προτεραιότητα
 
 ### Υποδομή
 - [ ] **Real AI**: `MOCK_AI=false` + `ANTHROPIC_API_KEY` στο Vercel dashboard — μόνο env config, χωρίς code changes

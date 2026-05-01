@@ -1,7 +1,10 @@
+import { CopyButton } from '@/components/ui/CopyButton'
+
 type Props = {
   label: string
   children: React.ReactNode
   accent?: 'indigo' | 'violet' | 'teal' | 'rose' | 'amber' | 'stone'
+  copyText?: string
 }
 
 const accentStyles = {
@@ -13,12 +16,15 @@ const accentStyles = {
   stone: 'text-stone-400',
 }
 
-export function ResultCard({ label, children, accent = 'stone' }: Props) {
+export function ResultCard({ label, children, accent = 'stone', copyText }: Props) {
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm space-y-2.5">
-      <p className={`text-xs font-semibold uppercase tracking-widest ${accentStyles[accent]}`}>
-        {label}
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className={`text-xs font-semibold uppercase tracking-widest ${accentStyles[accent]}`}>
+          {label}
+        </p>
+        {copyText && <CopyButton text={copyText} />}
+      </div>
       {children}
     </div>
   )

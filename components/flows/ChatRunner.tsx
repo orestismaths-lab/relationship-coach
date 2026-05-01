@@ -214,6 +214,7 @@ export function ChatRunner({ flow, sessionId, initialStep, totalSteps }: Props) 
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [limitReached, setLimitReached] = useState(false)
   const [safetyMessage, setSafetyMessage] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -252,6 +253,7 @@ export function ChatRunner({ flow, sessionId, initialStep, totalSteps }: Props) 
 
       if (!res.ok) {
         setMessages((m) => m.filter((x) => x.role !== 'spinner'))
+        if (res.status === 429) { setLimitReached(true); return }
         setError(data.error ?? t.chat.genericError)
         return
       }
@@ -315,6 +317,14 @@ export function ChatRunner({ flow, sessionId, initialStep, totalSteps }: Props) 
       setLoading(false)
     }
   }
+
+  if (limitReached) return (
+    <div className="rounded-2xl border border-stone-200 bg-white px-6 py-8 space-y-3 text-center animate-slide-up">
+      <p className="text-2xl">⏳</p>
+      <p className="text-sm font-semibold text-stone-800">{t.chat.limitTitle}</p>
+      <p className="text-sm text-stone-500 leading-relaxed">{t.chat.limitBody}</p>
+    </div>
+  )
 
   if (safetyMessage) return <SafetyBanner message={safetyMessage} />
 

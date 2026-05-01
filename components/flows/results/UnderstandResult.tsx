@@ -52,11 +52,11 @@ export function UnderstandResult({ output, t }: { output: UnderstandOutput; t: L
         </div>
       )}
 
-      <ResultCard label={t.reframe} accent="teal">
+      <ResultCard label={t.reframe} accent="teal" copyText={output.healthierReframe}>
         <Prose text={output.healthierReframe} />
       </ResultCard>
 
-      <ResultCard label={t.nextStep} accent="indigo">
+      <ResultCard label={t.nextStep} accent="indigo" copyText={output.suggestedNextStep}>
         <Prose text={output.suggestedNextStep} />
       </ResultCard>
 
