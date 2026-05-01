@@ -12,6 +12,16 @@ import type { PromptKey } from '@/lib/ai/prompts'
 import type { SessionAnswers } from '@/types'
 import type { Lang } from '@/lib/i18n/translations'
 
+function generateTitle(answers: Record<string, unknown>, fallback: string): string {
+  for (const v of Object.values(answers)) {
+    if (typeof v === 'string' && v.trim().length > 5) {
+      const trimmed = v.trim()
+      return trimmed.length > 50 ? trimmed.slice(0, 50) + '…' : trimmed
+    }
+  }
+  return fallback
+}
+
 const schema = z.object({
   stepId: z.string(),
   answer: z.union([z.string(), z.array(z.string()), z.number()]),
@@ -105,6 +115,7 @@ export async function POST(
     newState = advanceStep(newState, stepId, answer)
 
     const serialized = serializeState(newState)
+    const title = generateTitle(allAnswers as Record<string, unknown>, flow.title)
     await prisma.flowSession.update({
       where: { id: sessionId },
       data: {
@@ -113,6 +124,7 @@ export async function POST(
         aiOutputs: serialized.aiOutputs,
         status: 'COMPLETED',
         completedAt: new Date(),
+        title,
       },
     })
 

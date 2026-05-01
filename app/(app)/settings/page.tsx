@@ -1,6 +1,8 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getServerT } from '@/lib/i18n/server'
+import { SaveHistoryToggle } from '@/components/settings/SaveHistoryToggle'
+import { DeleteAllSessionsButton } from '@/components/settings/DeleteAllSessionsButton'
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions)
@@ -26,8 +28,9 @@ export default async function SettingsPage() {
       <section className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">{t.settings.privacy}</p>
         <div className="rounded-2xl border border-stone-200 bg-white divide-y divide-stone-100 shadow-sm">
+          <SaveHistoryToggle />
           <SettingsRowButton label={t.settings.exportData} action={t.settings.comingSoon} />
-          <SettingsRowButton label={t.settings.deleteSessions} action={t.settings.comingSoon} danger />
+          <DeleteAllSessionsButton />
         </div>
       </section>
 

@@ -11,6 +11,7 @@ import { PrepareResult } from '@/components/flows/results/PrepareResult'
 import { DecideResult } from '@/components/flows/results/DecideResult'
 import { getServerT, getServerLang } from '@/lib/i18n/server'
 import type { T } from '@/lib/i18n/translations'
+import { HistoryManager } from '@/components/history/HistoryManager'
 
 const accentBadge: Record<string, string> = {
   understand: 'bg-indigo-50 text-indigo-600',
@@ -58,9 +59,18 @@ export default async function CompletePage(props: {
   const aiOutputs = JSON.parse(flowSession.aiOutputs) as Record<string, FlowAIOutput>
   const summaryStepId = flow.steps.find((s) => s.type === 'summary')?.id ?? 'summary'
   const output = aiOutputs[summaryStepId] as FlowAIOutput | undefined
+  const answers = JSON.parse(flowSession.answers) as Record<string, unknown>
 
   return (
     <div className="space-y-8 animate-slide-up">
+      <HistoryManager
+        sessionId={sessionId}
+        flowId={flowId}
+        flowTitle={flow.title}
+        outputJson={output ? JSON.stringify(output) : '{}'}
+        answers={answers}
+      />
+
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${accentBadge[flowId] ?? 'bg-stone-100 text-stone-600'}`}>

@@ -34,6 +34,7 @@ model FlowSession {
   answers     String    @default("{}")
   aiOutputs   String    @default("{}")
   summary     String?
+  title       String?
   createdAt   DateTime  @default(now())
   completedAt DateTime?
 

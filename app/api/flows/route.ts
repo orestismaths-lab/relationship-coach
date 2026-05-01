@@ -53,3 +53,13 @@ export async function GET(req: NextRequest) {
 
   return Response.json({ sessions })
 }
+
+export async function DELETE(_req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  await prisma.flowSession.deleteMany({ where: { userId: session.user.id } })
+  return Response.json({ ok: true })
+}
