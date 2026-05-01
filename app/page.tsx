@@ -88,7 +88,7 @@ export default async function LandingPage() {
         {/* Safety Note */}
         <section className="mx-auto w-full max-w-2xl px-5 pb-20">
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-6 py-5 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-amber-600 mb-2">{l.important}</p>
+            <p className="text-sm font-semibold text-amber-800 mb-2">{l.important}</p>
             <p className="text-sm text-amber-800 leading-relaxed">{l.safetyNote}</p>
             <p className="mt-3 text-xs text-amber-600">{l.crisisNote}</p>
           </div>

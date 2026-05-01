@@ -355,7 +355,7 @@ export function ChatRunner({ flow, sessionId, initialStep, totalSteps }: Props) 
       )}
 
       {inputStep && !isSummaryStep && (
-        <div className="sticky bottom-0 pt-3 pb-1 bg-stone-50">
+        <div className="sticky bottom-0 pt-3 pb-1 bg-stone-50 border-t border-stone-100">
           {inputStep.type === 'text_input' && (
             <TextInput step={inputStep} flowId={flow.id} onSubmit={submitAnswer} loading={loading} />
           )}

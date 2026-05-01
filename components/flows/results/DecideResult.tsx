@@ -11,7 +11,7 @@ export function DecideResult({ output, t }: { output: DecideOutput; t: Labels })
         <Prose text={output.situationSummary} />
       </ResultCard>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="rounded-2xl border border-teal-100 bg-teal-50 p-4 space-y-2">
           <p className="text-xs font-semibold uppercase tracking-widest text-teal-500">{t.healthy}</p>
           <BulletList items={output.whatSeemsHealthy} />
@@ -38,7 +38,7 @@ export function DecideResult({ output, t }: { output: DecideOutput; t: Labels })
           {output.tradeOffs.map((item, i) => (
             <div key={i} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm space-y-3">
               <p className="text-sm font-medium text-stone-800">{item.option}</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <p className="text-xs font-medium text-teal-500">{t.benefits}</p>
                   <BulletList items={item.benefits} />
@@ -61,7 +61,7 @@ export function DecideResult({ output, t }: { output: DecideOutput; t: Labels })
 
       {output.safetyNote && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">{t.safetyNote}</p>
+          <p className="text-sm font-semibold text-amber-800">{t.safetyNote}</p>
           <p className="text-sm text-amber-800 leading-relaxed">{output.safetyNote}</p>
         </div>
       )}

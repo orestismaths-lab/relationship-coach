@@ -47,7 +47,7 @@ export function UnderstandResult({ output, t }: { output: UnderstandOutput; t: L
 
       {output.redFlagsOrSafetyConcerns.length > 0 && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">{t.safety}</p>
+          <p className="text-sm font-semibold text-amber-800">{t.safety}</p>
           <BulletList items={output.redFlagsOrSafetyConcerns} marker="⚠" />
         </div>
       )}

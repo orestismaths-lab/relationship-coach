@@ -20,7 +20,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={initialLang} className={`${geist.variable} h-full antialiased`}>
-      <body className="min-h-full bg-gray-50 font-sans">
+      <body className="min-h-full bg-stone-50 font-sans">
         <SessionProvider>
           <ToastProvider>
             <LanguageProvider initialLang={initialLang}>

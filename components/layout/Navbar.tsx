@@ -18,7 +18,7 @@ export function Navbar() {
   ]
 
   return (
-    <header className="border-b border-stone-200 bg-white sticky top-0 z-10">
+    <header className="border-b border-stone-200 bg-white/90 backdrop-blur-sm sticky top-0 z-10">
       <div className="mx-auto flex h-13 max-w-2xl items-center justify-between px-5">
         <Link
           href="/dashboard"

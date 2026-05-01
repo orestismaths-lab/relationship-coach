@@ -64,7 +64,7 @@ export function TwoColumn({ left, right, leftLabel, rightLabel }: {
   rightLabel: string
 }) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div className="space-y-1.5">
         <p className="text-xs font-medium text-stone-400">{leftLabel}</p>
         <BulletList items={left} />

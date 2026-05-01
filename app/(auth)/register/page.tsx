@@ -52,43 +52,43 @@ export default function RegisterPage() {
       </div>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">{t.auth.register.title}</h1>
-          <p className="mt-1 text-sm text-gray-500">{t.auth.register.subtitle}</p>
+          <h1 className="text-2xl font-bold text-stone-900">{t.auth.register.title}</h1>
+          <p className="mt-1 text-sm text-stone-500">{t.auth.register.subtitle}</p>
         </div>
 
         <Card>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && <Alert type="error">{error}</Alert>}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">{t.auth.register.name}</label>
+              <label className="text-sm font-medium text-stone-700">{t.auth.register.name}</label>
               <input
                 type="text"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">{t.auth.register.email}</label>
+              <label className="text-sm font-medium text-stone-700">{t.auth.register.email}</label>
               <input
                 type="email"
                 required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">{t.auth.register.password}</label>
+              <label className="text-sm font-medium text-stone-700">{t.auth.register.password}</label>
               <input
                 type="password"
                 required
                 minLength={8}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <p className="text-xs text-gray-400">{t.auth.register.passwordHint}</p>
+              <p className="text-xs text-stone-400">{t.auth.register.passwordHint}</p>
             </div>
             <Button type="submit" loading={loading} className="w-full">
               {t.auth.register.submit}
@@ -96,7 +96,7 @@ export default function RegisterPage() {
           </form>
         </Card>
 
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-stone-500">
           {t.auth.register.hasAccount}{' '}
           <Link href="/login" className="text-indigo-600 hover:underline font-medium">
             {t.auth.register.signIn}
