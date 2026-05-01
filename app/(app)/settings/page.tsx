@@ -3,6 +3,9 @@ import { authOptions } from '@/lib/auth'
 import { getServerT } from '@/lib/i18n/server'
 import { SaveHistoryToggle } from '@/components/settings/SaveHistoryToggle'
 import { DeleteAllSessionsButton } from '@/components/settings/DeleteAllSessionsButton'
+import { ChangePasswordForm } from '@/components/settings/ChangePasswordForm'
+import { DeleteAccountButton } from '@/components/settings/DeleteAccountButton'
+import { ExportButton } from '@/components/settings/ExportButton'
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions)
@@ -20,8 +23,8 @@ export default async function SettingsPage() {
         <div className="rounded-2xl border border-stone-200 bg-white divide-y divide-stone-100 shadow-sm">
           <SettingsRow label={t.settings.email} value={session?.user?.email ?? '—'} />
           <SettingsRow label={t.settings.name} value={session?.user?.name ?? '—'} />
-          <SettingsRowButton label={t.settings.changePassword} action={t.settings.comingSoon} />
-          <SettingsRowButton label={t.settings.deleteAccount} action={t.settings.comingSoon} danger />
+          <ChangePasswordForm />
+          <DeleteAccountButton />
         </div>
       </section>
 
@@ -29,7 +32,7 @@ export default async function SettingsPage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">{t.settings.privacy}</p>
         <div className="rounded-2xl border border-stone-200 bg-white divide-y divide-stone-100 shadow-sm">
           <SaveHistoryToggle />
-          <SettingsRowButton label={t.settings.exportData} action={t.settings.comingSoon} />
+          <ExportButton />
           <DeleteAllSessionsButton />
         </div>
       </section>

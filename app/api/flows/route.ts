@@ -45,8 +45,16 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { searchParams } = new URL(req.url)
+  const flowId = searchParams.get('flowId')
+  const status = searchParams.get('status')
+
+  const where: Record<string, unknown> = { userId: session.user.id }
+  if (flowId) where.flowId = flowId
+  if (status) where.status = status
+
   const sessions = await prisma.flowSession.findMany({
-    where: { userId: session.user.id },
+    where,
     orderBy: { createdAt: 'desc' },
     take: 20,
   })

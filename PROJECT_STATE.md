@@ -1,7 +1,7 @@
 # Relationship Coach — Project State
 
 > Αυτό το αρχείο είναι η "μνήμη" του project. Ενημερώνεται μετά από κάθε σημαντική αλλαγή.
-> Τελευταία ενημέρωση: 2026-04-30 (bilingual EN/EL)
+> Τελευταία ενημέρωση: 2026-05-01
 
 ---
 
@@ -90,15 +90,16 @@ AI_MAX_CALLS_PER_DAY=10
 | `lib/prisma.ts` | Prisma singleton με `PrismaLibSql` adapter (handles file: + libsql:) |
 | `lib/auth.ts` | NextAuth config (credentials, JWT, session callbacks) |
 | `lib/usage.ts` | Daily AI call limiter (default 10/day, resets at midnight) |
+| `lib/history.ts` | localStorage/sessionStorage helpers: local sessions, save preference |
 | `lib/flows/definitions.ts` | Static definitions για τα 3 flows + βήματα |
 | `lib/flows/engine.ts` | Flow state machine (init, advance, serialize, deserialize) |
-| `lib/ai/safety.ts` | Per-step keyword safety check (crisis / manipulation / abuse) |
-| `lib/ai/classifier.ts` | Pre-generation safety classifier (SAFE/SENSITIVE/HIGH_RISK/BLOCKED) |
+| `lib/ai/safety.ts` | Per-step keyword safety check (3 categories, crisis resources) |
+| `lib/ai/classifier.ts` | Pre-generation safety classifier (4 classes, 18 signal rules) |
 | `lib/ai/prompts.ts` | Global system prompt + 3 per-flow prompt builders |
 | `lib/ai/providers.ts` | Anthropic + OpenAI provider call logic |
 | `lib/ai/validate.ts` | Runtime schema validation για όλα τα AI output types |
 | `lib/ai/mock.ts` | Mock responses για όλα τα flows |
-| `lib/ai/client.ts` | AI orchestrator (classify → mock/real → validate) |
+| `lib/ai/client.ts` | AI orchestrator (classify → mock/real → validate) — accepts lang param |
 
 ### Pages
 | Route | Αρχείο | Περιγραφή |
@@ -106,21 +107,28 @@ AI_MAX_CALLS_PER_DAY=10
 | `/` | `app/page.tsx` | Landing page (unauthenticated) |
 | `/login` | `app/(auth)/login/page.tsx` | Login |
 | `/register` | `app/(auth)/register/page.tsx` | Register |
-| `/dashboard` | `app/(app)/dashboard/page.tsx` | Flow selection + safety note |
-| `/flows/[flowId]` | `app/(app)/flows/[flowId]/page.tsx` | Chat flow runner |
-| `/flows/[flowId]/complete` | `app/(app)/flows/[flowId]/complete/page.tsx` | Result/summary |
-| `/history` | `app/(app)/history/page.tsx` | Past sessions |
-| `/settings` | `app/(app)/settings/page.tsx` | Settings placeholder |
+| `/dashboard` | `app/(app)/dashboard/page.tsx` | Flow selection + recent sessions |
+| `/flows/[flowId]` | `app/(app)/flows/[flowId]/page.tsx` | Chat flow runner (με resume) |
+| `/flows/[flowId]/complete` | `app/(app)/flows/[flowId]/complete/page.tsx` | Result + HistoryManager |
+| `/history` | `app/(app)/history/page.tsx` | Past sessions (COMPLETED + IN_PROGRESS) |
+| `/history/local` | `app/(app)/history/local/page.tsx` | View a browser-only local session |
+| `/settings` | `app/(app)/settings/page.tsx` | Settings (account, privacy, about) |
 
 ### API Routes
 | Route | Method | Λειτουργία |
 |---|---|---|
 | `/api/auth/[...nextauth]` | GET/POST | NextAuth handler |
 | `/api/auth/register` | POST | Δημιουργία account |
+| `/api/auth/change-password` | POST | Αλλαγή κωδικού (απαιτεί τρέχοντα) |
+| `/api/auth/delete-account` | DELETE | Διαγραφή λογαριασμού (απαιτεί κωδικό) |
 | `/api/flows` | POST | Start new flow session |
-| `/api/flows` | GET | List user sessions |
+| `/api/flows` | GET | List sessions (`?flowId=&status=` για φιλτράρισμα) |
+| `/api/flows` | DELETE | Διαγραφή ΟΛΩΝ των sessions του χρήστη |
+| `/api/flows/[sessionId]` | PATCH | Abandon session (`{ status: 'ABANDONED' }`) |
+| `/api/flows/[sessionId]` | DELETE | Διαγραφή συγκεκριμένης session |
 | `/api/flows/[sessionId]/step` | POST | Submit step → classify → safety → AI if needed |
 | `/api/flows/[sessionId]/complete` | GET | Fetch completed session data |
+| `/api/export` | GET | Download all sessions as JSON |
 
 ### UI Components
 | Αρχείο | Ρόλος |
@@ -129,15 +137,26 @@ AI_MAX_CALLS_PER_DAY=10
 | `components/ui/Card.tsx` | White card με border/shadow |
 | `components/ui/Alert.tsx` | Error/success/info/warning messages |
 | `components/ui/ProgressBar.tsx` | Step progress indicator |
-| `components/layout/Navbar.tsx` | Top nav (Home / History / Settings / Sign out) |
+| `components/ui/LangToggle.tsx` | Language switcher (flag + label) — landing/login/register/navbar |
+| `components/layout/Navbar.tsx` | Top nav (Home / History / Settings / Sign out / LangToggle) |
 | `components/flows/FlowCard.tsx` | Dashboard card για κάθε flow |
-| `components/flows/ChatRunner.tsx` | Conversational chat UI (replaces form-based FlowRunner) |
-| `components/flows/results/ResultCard.tsx` | Shared card + list primitives για result renderers |
+| `components/flows/ChatRunner.tsx` | Conversational chat UI |
+| `components/flows/results/ResultCard.tsx` | Shared card + list primitives |
 | `components/flows/results/UnderstandResult.tsx` | Renderer για UnderstandOutput |
-| `components/flows/results/PrepareResult.tsx` | Renderer για PrepareOutput (4 message versions) |
-| `components/flows/results/DecideResult.tsx` | Renderer για DecideOutput (trade-offs, options) |
+| `components/flows/results/PrepareResult.tsx` | Renderer για PrepareOutput |
+| `components/flows/results/DecideResult.tsx` | Renderer για DecideOutput |
+| `components/history/HistoryManager.tsx` | Complete page island: save/delete based on preference |
+| `components/history/DeleteButton.tsx` | Two-tap delete button για history sessions |
+| `components/history/LocalSessionsList.tsx` | Browser-only sessions στο history page |
+| `components/history/LocalSessionView.tsx` | Renders a local session client-side |
+| `components/settings/SaveHistoryToggle.tsx` | Toggle αποθήκευσης ιστορικού (localStorage) |
+| `components/settings/DeleteAllSessionsButton.tsx` | Διαγραφή όλων με 2-phase confirm |
+| `components/settings/ChangePasswordForm.tsx` | Inline form αλλαγής κωδικού |
+| `components/settings/DeleteAccountButton.tsx` | Διαγραφή λογαριασμού με password confirm |
+| `components/settings/ExportButton.tsx` | Download JSON export |
 | `components/SafetyBanner.tsx` | Crisis/safety message with resources |
 | `components/SessionProvider.tsx` | NextAuth session wrapper |
+| `contexts/LanguageContext.tsx` | Client-side lang state (en/el) |
 | `contexts/ToastContext.tsx` | Toast notifications |
 
 ---
@@ -224,17 +243,36 @@ Type guards: `isUnderstandOutput`, `isPrepareOutput`, `isDecideOutput` in `types
 3. **Pre-generation classifier** (`lib/ai/classifier.ts`) — classifies full answer set before AI call:
    - `SAFE` → proceed
    - `SENSITIVE` → proceed with caution
-   - `HIGH_RISK` → return crisis fallback, no AI call
-   - `BLOCKED` → return blocked fallback, no AI call
+   - `HIGH_RISK` → return `translations[lang].safety.highRisk`, no AI call
+   - `BLOCKED` → return `translations[lang].safety.blocked`, no AI call
 4. **Usage limit** — checked before AI call (default 10/day, env: `AI_MAX_CALLS_PER_DAY`)
 5. **Response validation** (`lib/ai/validate.ts`) — schema check before returning to frontend
 
-### Classifier signals (18 rules)
-| Class | Signals |
-|---|---|
-| BLOCKED | manipulation_tactics, surveillance, threats_coercion, physical_harm_intent, sexual_coercion, illegal_activity |
-| HIGH_RISK | self_harm_suicidal, immediate_danger, domestic_violence, coercive_control, sexual_abuse, fear_of_partner, child_safety |
-| SENSITIVE | anger_intense, hopelessness, harassment_received, infidelity, substance_abuse |
+---
+
+## Session History System
+
+### Storage tiers
+| Tier | Πότε | Πού |
+|---|---|---|
+| DB (`FlowSession`) | Save history ON (default) | Turso/SQLite — ορατό σε όλες τις συσκευές |
+| sessionStorage | Save history OFF | Browser tab — χάνεται στο κλείσιμο tab |
+
+### Save preference
+- Key: `rc_save_history` στο `localStorage` (default `true`)
+- Toggle: Settings → Privacy → "Save reflection history"
+- Αλλαγή preference δεν επηρεάζει ήδη αποθηκευμένες sessions
+
+### Complete page flow
+- `HistoryManager` client island: διαβάζει preference on mount
+- Save ON: session μένει στο DB, εμφανίζεται badge "Saved to history"
+- Save OFF: αποθηκεύει στο sessionStorage, διαγράφει από DB, εμφανίζεται amber banner
+
+### Session resume
+- Πριν ξεκινήσει flow, το flow page ελέγχει για IN_PROGRESS sessions ίδιου flowId
+- Αν βρεθεί: εμφανίζεται prompt "Continue / Start fresh"
+- "Start fresh" → κάνει PATCH (abandon) την παλιά, δημιουργεί νέα
+- History page εμφανίζει IN_PROGRESS sessions με "Continue" link
 
 ---
 
@@ -253,22 +291,31 @@ Type guards: `isUnderstandOutput`, `isPrepareOutput`, `isDecideOutput` in `types
 
 ```prisma
 User         { id, email (unique), name?, password, createdAt, sessions[], usage? }
-FlowSession  { id, userId, flowId, status, currentStep, answers (JSON), aiOutputs (JSON), summary?, createdAt, completedAt? }
+FlowSession  { id, userId, flowId, status, currentStep, answers (JSON), aiOutputs (JSON),
+               summary?, title?, createdAt, completedAt? }
 UserUsage    { userId (PK), dailyAICalls, dailyReset, totalSessions }
 ```
 
 `answers` και `aiOutputs` αποθηκεύονται ως JSON strings.
+`title` — auto-generated από το πρώτο text answer (≤50 chars) κατά την ολοκλήρωση.
 Indexes: `FlowSession(userId)`, `FlowSession(userId, status)`.
+
+**⚠️ Turso production migration**: για νέα column `title`:
+```sql
+ALTER TABLE FlowSession ADD COLUMN title TEXT;
+```
 
 ---
 
-## Business Rules
+## i18n Architecture
 
-- Κάθε flow ξεκινά νέα `FlowSession` (δεν γίνεται resume ακόμα)
-- AI generation μετράει ως 1 call στο daily limit
-- Safety classifier τρέχει πάντα πριν το AI call — HIGH_RISK/BLOCKED επιστρέφουν fallback χωρίς generation
-- Mock mode: `MOCK_AI=true` → instant canned responses, χωρίς API key
-- `lib/prisma.ts` χρησιμοποιεί `PrismaLibSql` για όλα τα environments (file: locally, libsql:// production)
+- Cookie `lang` (en/el) — διαβάζεται από server components μέσω `getServerLang()` + από client μέσω `LanguageContext`
+- `lib/i18n/translations.ts` — όλα τα UI strings (nav, auth, dashboard, chat, history, settings, complete, safety, landing, results labels)
+- `lib/i18n/flowTranslations.ts` — flow questions/hints/placeholders/options per language. **Βασική αρχή**: option VALUES = English (stored στη DB + safety checks), option LABELS = translated (display only)
+- `lib/i18n/server.ts` — `getServerLang()`, `getServerT()` για server components
+- `contexts/LanguageContext.tsx` — client-side lang state, initialized από cookie + localStorage sync
+- Language switch → `setLang()` → cookie + localStorage + `router.refresh()` για re-render server components
+- LangToggle component → landing page header, login/register top-right, navbar
 
 ---
 
@@ -281,49 +328,38 @@ Indexes: `FlowSession(userId)`, `FlowSession(userId, status)`.
 - [x] Flow engine (state machine, serialize/deserialize)
 - [x] Conversational chat UI (ChatRunner) — AI + user bubbles, typing indicator
 - [x] Per-step keyword safety check (3 categories, crisis resources)
-- [x] Pre-generation safety classifier (4 classes, 18 signal rules, 27 tests — `npm run test:classifier`)
+- [x] Pre-generation safety classifier (4 classes, 18 signal rules, 27 tests)
 - [x] Global system prompt + per-flow prompt builders
 - [x] Provider layer: Anthropic + OpenAI placeholder (`AI_PROVIDER` env var)
 - [x] Mock AI mode (`MOCK_AI=true`, 3 realistic per-schema responses)
-- [x] Strict per-flow AI output schemas: `UnderstandOutput`, `PrepareOutput`, `DecideOutput`
+- [x] Strict per-flow AI output schemas με type guards
 - [x] Runtime response validation before returning to frontend
-- [x] Result renderer components (section-based, scannable — trade-offs, message versions, etc.)
-- [x] Complete page: picks correct renderer per flowId with type guard validation
-- [x] History page (session list, status badges)
-- [x] Settings page (shows AI mode + provider)
+- [x] Result renderer components (section-based, scannable)
+- [x] Complete page: picks correct renderer per flowId με type guard validation
 - [x] Daily usage limiter (configurable via `AI_MAX_CALLS_PER_DAY`)
 - [x] Toast notifications
 - [x] Safety banner (crisis + DV resources)
-- [x] Turso production DB (libSQL) — `@prisma/adapter-libsql`, static imports, Vercel-compatible
-- [x] GitHub repo: https://github.com/orestismaths-lab/relationship-coach
+- [x] Turso production DB (libSQL)
 - [x] Vercel deploy: https://relationship-coach-red.vercel.app
-- [x] Build: 0 TypeScript errors, 14 routes, `prisma generate && next build`
-- [x] Bilingual EN/EL — language switcher στο Navbar, cookie-based persistence, server + client components translated, flow questions/options/safety messages σε δύο γλώσσες
-- [x] Bug fix: generate step error handling (network error, non-OK, safety → σωστή αντίδραση αντί silent failure)
-- [x] Bug fix: complete page reads summary key δυναμικά από flow definition
-
----
-
-## i18n Architecture
-
-- Cookie `lang` (en/el) — διαβάζεται από server components μέσω `getServerLang()` + από client μέσω `LanguageContext`
-- `lib/i18n/translations.ts` — όλα τα UI strings (nav, auth, dashboard, chat, history, settings, complete, safety, landing, results labels)
-- `lib/i18n/flowTranslations.ts` — flow questions/hints/placeholders/options per language. **Βασική αρχή**: option VALUES = English (stored στη DB + safety checks), option LABELS = translated (display only)
-- `lib/i18n/server.ts` — `getServerLang()`, `getServerT()` για server components
-- `contexts/LanguageContext.tsx` — client-side lang state, initialized από cookie + localStorage sync
-- Language switch → `setLang()` → cookie + localStorage + `router.refresh()` για re-render server components
+- [x] Build: 0 TypeScript errors
+- [x] **Bilingual EN/EL** — LangToggle παντού (landing/login/register/navbar), cookie-based persistence, server + client components translated, flow questions/options/safety messages σε δύο γλώσσες
+- [x] **Session History** — save history toggle, delete ανά session, delete all, browser-only (sessionStorage) mode, local session viewer, privacy note
+- [x] **Dashboard** — recent 3 completed sessions με view link
+- [x] **Session resume** — flow page ελέγχει για IN_PROGRESS πριν ξεκινήσει νέα
+- [x] **History page** — εμφανίζει COMPLETED + IN_PROGRESS, delete button, local sessions section
+- [x] **Change password** — inline form στο Settings (requires current password)
+- [x] **Delete account** — password-confirmed deletion με cascade, redirect to `/`
+- [x] **Export data** — `GET /api/export` → JSON download με όλες τις sessions
+- [x] **Classifier safety messages translated** — `highRisk` + `blocked` σε EN/EL, `generateAI` δέχεται `lang` parameter
+- [x] **LangToggle** — styled με flag emoji + border, ορατό σε landing/login/register/navbar
 
 ---
 
 ## Ανοιχτά / Εκκρεμή
 
-- [ ] Real AI API key (`MOCK_AI=false` + `ANTHROPIC_API_KEY` στο Vercel dashboard)
-- [ ] Custom domain (αν χρειαστεί)
-- [ ] Session resume (αν ο χρήστης φύγει και επιστρέψει)
-- [ ] Change password (settings)
-- [ ] Delete account / delete sessions (settings)
-- [ ] Export data (settings)
-- [ ] Email verification (register)
-- [ ] Payments / premium tier
-- [ ] Mobile app
-- [ ] Landing page: language switcher (τώρα μόνο στο Navbar — η landing page δεν έχει Navbar)
+- [ ] **Real AI**: `MOCK_AI=false` + `ANTHROPIC_API_KEY` στο Vercel dashboard — μόνο env config, χωρίς code changes
+- [ ] **Turso migration**: `ALTER TABLE FlowSession ADD COLUMN title TEXT;` — εφαρμογή πριν deploy
+- [ ] **Email verification** on register (απαιτεί Resend setup)
+- [ ] **Custom domain** (αν χρειαστεί)
+- [ ] **Premium tier / payments** (μελλοντικό)
+- [ ] **Mobile app** (μελλοντικό)

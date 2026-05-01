@@ -102,7 +102,7 @@ export async function POST(
 
     let result
     try {
-      result = await generateAI(stepDef.aiPromptKey as PromptKey, allAnswers)
+      result = await generateAI(stepDef.aiPromptKey as PromptKey, allAnswers, lang)
     } catch {
       return Response.json({ error: 'Could not generate reflection. Please try again.' }, { status: 500 })
     }

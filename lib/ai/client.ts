@@ -4,8 +4,10 @@ import { buildPrompt } from './prompts'
 import { mockGenerate } from './mock'
 import { callProvider } from './providers'
 import { validateAIOutput } from './validate'
-import { classifyAnswers, HIGH_RISK_RESPONSE, BLOCKED_RESPONSE } from './classifier'
+import { classifyAnswers } from './classifier'
 import type { AIProvider } from './providers'
+import { translations } from '@/lib/i18n/translations'
+import type { Lang } from '@/lib/i18n/translations'
 
 // ─── Env config ───────────────────────────────────────────────────────────────
 
@@ -56,15 +58,17 @@ export type GenerationResult =
 
 export async function generateAI(
   key: PromptKey,
-  answers: SessionAnswers
+  answers: SessionAnswers,
+  lang: Lang = 'en'
 ): Promise<GenerationResult> {
+  const s = translations[lang].safety
   // Safety classification — runs before any generation, including mock
   const classification = classifyAnswers(answers)
   if (classification.classification === 'HIGH_RISK') {
-    return { blocked: true, classification: 'HIGH_RISK', message: HIGH_RISK_RESPONSE }
+    return { blocked: true, classification: 'HIGH_RISK', message: s.highRisk }
   }
   if (classification.classification === 'BLOCKED') {
-    return { blocked: true, classification: 'BLOCKED', message: BLOCKED_RESPONSE }
+    return { blocked: true, classification: 'BLOCKED', message: s.blocked }
   }
   // SENSITIVE: proceed with generation — classification is logged via the result object
   // (caller can inspect classification.signals if needed for future monitoring)

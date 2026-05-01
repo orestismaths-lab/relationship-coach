@@ -23,7 +23,7 @@ export default async function HistoryPage() {
   const lang = await getServerLang()
 
   const sessions = await prisma.flowSession.findMany({
-    where: { userId: session.user.id, status: 'COMPLETED' },
+    where: { userId: session.user.id, status: { in: ['COMPLETED', 'IN_PROGRESS'] } },
     orderBy: { createdAt: 'desc' },
     take: 50,
   })
@@ -73,15 +73,30 @@ export default async function HistoryPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-600">
-                    {t.history.status.COMPLETED}
-                  </span>
-                  <Link
-                    href={`/flows/${s.flowId}/complete?session=${s.id}`}
-                    className="text-xs text-indigo-500 hover:text-indigo-700 hover:underline"
-                  >
-                    {t.history.view}
-                  </Link>
+                  {s.status === 'COMPLETED' ? (
+                    <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-600">
+                      {t.history.status.COMPLETED}
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-600">
+                      {t.history.status.IN_PROGRESS}
+                    </span>
+                  )}
+                  {s.status === 'COMPLETED' ? (
+                    <Link
+                      href={`/flows/${s.flowId}/complete?session=${s.id}`}
+                      className="text-xs text-indigo-500 hover:text-indigo-700 hover:underline"
+                    >
+                      {t.history.view}
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`/flows/${s.flowId}`}
+                      className="text-xs text-indigo-500 hover:text-indigo-700 hover:underline"
+                    >
+                      {t.chat.continueFlow} →
+                    </Link>
+                  )}
                   <DeleteButton sessionId={s.id} />
                 </div>
               </div>
