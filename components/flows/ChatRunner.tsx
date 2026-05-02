@@ -62,76 +62,83 @@ function TextInput({ step, flowId, onSubmit, loading }: {
   )
 }
 
-function SelectInput({ step, flowId, onSubmit, loading, multi }: {
+function SuggestionsInput({ step, flowId, onSubmit, loading }: {
   step: FlowStep
   flowId: string
-  onSubmit: (v: string | string[]) => void
+  onSubmit: (v: string) => void
   loading: boolean
-  multi: boolean
 }) {
   const { lang, t } = useLanguage()
-  const [selected, setSelected] = useState<string[]>([])
+  const [value, setValue] = useState('')
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => { ref.current?.focus() }, [])
 
   const options = getStepOptions(flowId, step.id, lang, step.options ?? [])
+  const isSafety = (val: string) => step.safetyTriggerValues?.includes(val) ?? false
 
-  const toggle = (value: string) => {
-    if (!multi) { onSubmit(value); return }
-    setSelected((s) => s.includes(value) ? s.filter((x) => x !== value) : [...s, value])
+  const handlePill = (optValue: string, label: string) => {
+    if (isSafety(optValue)) {
+      // submit the value directly so safetyTriggerValues check on the server fires
+      onSubmit(optValue)
+      return
+    }
+    setValue((prev) => prev ? `${prev}, ${label}` : label)
+    ref.current?.focus()
   }
 
-  const isSafety = (value: string) => step.safetyTriggerValues?.includes(value) ?? false
+  const submit = () => {
+    const trimmed = value.trim()
+    if (!trimmed || loading) return
+    onSubmit(trimmed)
+    setValue('')
+  }
 
   return (
     <div className="flex flex-col gap-2">
-      <div className={multi ? 'flex flex-wrap gap-2' : 'flex flex-col gap-1.5'}>
-        {options.map(({ value, label }) => {
-          const isSelected = selected.includes(value)
-          const safety = isSafety(value)
-          return (
+      <textarea
+        ref={ref}
+        className="w-full rounded-2xl border border-stone-200 bg-white p-4 text-sm text-stone-800 placeholder:text-stone-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 resize-none shadow-sm transition-colors"
+        rows={2}
+        placeholder="…"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
+        disabled={loading}
+      />
+      {options.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {options.map(({ value: optValue, label }) => (
             <button
-              key={value}
-              onClick={() => toggle(value)}
+              key={optValue}
+              type="button"
+              onClick={() => handlePill(optValue, label)}
               disabled={loading}
-              className={
-                multi
-                  ? `rounded-full border px-4 py-2 text-sm font-medium transition-all cursor-pointer disabled:opacity-40
-                      ${isSelected
-                        ? 'border-indigo-300 bg-indigo-600 text-white shadow-sm'
-                        : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:bg-stone-50'
-                      }`
-                  : `rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all cursor-pointer disabled:opacity-40
-                      ${safety
-                        ? 'border-stone-200 bg-white text-amber-700 hover:border-amber-200 hover:bg-amber-50'
-                        : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50'
-                      }`
-              }
+              className={`rounded-full border px-3 py-1 text-xs transition-colors cursor-pointer disabled:opacity-40
+                ${isSafety(optValue)
+                  ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                  : 'border-stone-200 bg-stone-50 text-stone-500 hover:border-stone-300 hover:bg-white hover:text-stone-700'
+                }`}
             >
-              {!multi && safety && <span className="mr-2 text-amber-500">⚠</span>}
+              {isSafety(optValue) && <span className="mr-1">⚠</span>}
               {label}
             </button>
-          )
-        })}
-      </div>
-
-      {multi && (
-        <div className="flex items-center justify-between mt-1">
-          {!step.required && selected.length === 0 ? (
-            <button
-              onClick={() => onSubmit([])}
-              className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
-            >
-              {t.chat.skip}
-            </button>
-          ) : <span />}
-          <button
-            onClick={() => onSubmit(selected)}
-            disabled={selected.length === 0 && !!step.required}
-            className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            {t.chat.continue}
-          </button>
+          ))}
         </div>
       )}
+      <div className="flex items-center justify-between">
+        {!step.required ? (
+          <button onClick={() => onSubmit('')} className="text-xs text-stone-300 hover:text-stone-500 transition-colors">
+            {t.chat.skip}
+          </button>
+        ) : <span className="text-xs text-stone-300">{t.chat.sendHint}</span>}
+        <button
+          onClick={submit}
+          disabled={!value.trim() || loading}
+          className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          {t.chat.send}
+        </button>
+      </div>
     </div>
   )
 }
@@ -369,14 +376,8 @@ export function ChatRunner({ flow, sessionId, initialStep, totalSteps }: Props) 
           {inputStep.type === 'text_input' && (
             <TextInput step={inputStep} flowId={flow.id} onSubmit={submitAnswer} loading={loading} />
           )}
-          {inputStep.type === 'single_select' && (
-            <SelectInput step={inputStep} flowId={flow.id} onSubmit={(v) => submitAnswer(v as string)} loading={loading} multi={false} />
-          )}
-          {inputStep.type === 'multi_select' && (
-            <SelectInput step={inputStep} flowId={flow.id} onSubmit={(v) => submitAnswer(v as string[])} loading={loading} multi={true} />
-          )}
-          {inputStep.type === 'emotion_picker' && (
-            <SelectInput step={inputStep} flowId={flow.id} onSubmit={(v) => submitAnswer(v as string[])} loading={loading} multi={true} />
+          {(inputStep.type === 'single_select' || inputStep.type === 'multi_select' || inputStep.type === 'emotion_picker') && (
+            <SuggestionsInput step={inputStep} flowId={flow.id} onSubmit={(v) => submitAnswer(v)} loading={loading} />
           )}
         </div>
       )}
