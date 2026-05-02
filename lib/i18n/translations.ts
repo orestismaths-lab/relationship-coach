@@ -44,7 +44,7 @@ const en = {
       'This tool supports reflection and communication. It is not therapy, crisis support, legal advice, medical advice, or emergency help.',
   },
   chat: {
-    sendHint: '⌘ + Enter to send',
+    sendHint: 'Shift + Enter for new line',
     send: 'Send',
     skip: 'Skip',
     continue: 'Continue',
@@ -254,7 +254,7 @@ const el: typeof en = {
       'Αυτό το εργαλείο υποστηρίζει την αυτογνωσία και την επικοινωνία. Δεν είναι θεραπεία, κρίσιμη υποστήριξη, νομική ή ιατρική συμβουλή.',
   },
   chat: {
-    sendHint: '⌘ + Enter για αποστολή',
+    sendHint: 'Shift + Enter για νέα γραμμή',
     send: 'Αποστολή',
     skip: 'Παράλειψη',
     continue: 'Συνέχεια',

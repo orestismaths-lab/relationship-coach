@@ -45,7 +45,7 @@ function TextInput({ step, flowId, onSubmit, loading }: {
         placeholder={stepT?.placeholder ?? step.placeholder ?? '…'}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit() }}
+        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
         disabled={loading}
       />
       <div className="flex items-center justify-between">
