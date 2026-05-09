@@ -3,6 +3,12 @@
 import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
 
+function renderBold(text: string): React.ReactNode[] {
+  return text.split(/\*\*(.*?)\*\*/g).map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+  )
+}
+
 export function SafetyBanner({ message }: { message: string }) {
   const { t } = useLanguage()
 
@@ -12,12 +18,9 @@ export function SafetyBanner({ message }: { message: string }) {
         <p className="text-sm font-semibold text-amber-800">
           {t.safety.paused}
         </p>
-        <p
-          className="text-sm text-amber-900 leading-relaxed"
-          dangerouslySetInnerHTML={{
-            __html: message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
-          }}
-        />
+        <p className="text-sm text-amber-900 leading-relaxed">
+          {renderBold(message)}
+        </p>
       </div>
       <p className="text-sm text-stone-400 text-center">
         {t.safety.closeOrReturn}{' '}

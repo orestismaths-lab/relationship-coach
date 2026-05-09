@@ -1,7 +1,7 @@
 # Relationship Coach — Project State
 
 > Αυτό το αρχείο είναι η "μνήμη" του project. Ενημερώνεται μετά από κάθε σημαντική αλλαγή.
-> Τελευταία ενημέρωση: 2026-05-02
+> Τελευταία ενημέρωση: 2026-05-09
 
 ---
 
@@ -356,13 +356,15 @@ ALTER TABLE FlowSession ADD COLUMN title TEXT;
 - [x] **AC #8 — Copy buttons** — `CopyButton` component (clipboard API + checkmark feedback), copy icon στο `ResultCard` header (optional `copyText` prop), wired σε nextStep/reframe cards (Understand + Decide)
 - [x] **AC #9 — Editable message drafts** — `PrepareResult` πλέον 'use client', όλα τα message cards (recommended, softer, direct, boundary) είναι editable textarea + copy button
 - [x] **AC #10 — Usage limit banner** — 429 ανιχνεύεται ξεχωριστά στο ChatRunner, εμφανίζεται dedicated banner αντί για generic error. Translation keys: `limitTitle` + `limitBody` (EN + EL)
+- [x] **Enter to send** — Enter στέλνει, Shift+Enter νέα γραμμή. `sendHint` translations ενημερώθηκαν (EN + EL)
+- [x] **Free text + suggestions** — Αντικατάσταση SelectInput με SuggestionsInput: textarea + clickable pills. Safety-trigger pills auto-submit με value. Φ bubble δείχνει πλέον το κείμενο που έγραψε ο χρήστης (όχι English value)
+- [x] **Personalized AI context** — `lib/ai/userContext.ts`: last 5 completed sessions του χρήστη injάρονται ως context στο AI prompt (relationship, situation, feelings, patterns, next steps). AI απαντά με γνώση ιστορικού
+- [x] **Bug fix — Progress bar** — `currentStepIndex + 1` για το width calculation, τώρα φτάνει 100% στο τελευταίο ερώτημα
+- [x] **Bug fix — SafetyBanner XSS** — αντικατάσταση `dangerouslySetInnerHTML` με safe `renderBold()` React function (splits on `**...**`, renders `<strong>` elements)
 
 ---
 
 ## Ανοιχτά / Εκκρεμή
-
-### Acceptance Criteria — Εκκρεμή (minor)
-- [ ] **AC #8 partial** — Copy για list items (BulletList/ArrowList) — δεν υλοποιήθηκε, χαμηλή προτεραιότητα
 
 ### Υποδομή
 - [ ] **Real AI**: `MOCK_AI=false` + `ANTHROPIC_API_KEY` στο Vercel dashboard — μόνο env config, χωρίς code changes

@@ -345,7 +345,7 @@ export function ChatRunner({ flow, sessionId, initialStep, totalSteps }: Props) 
         <div className="h-1 flex-1 rounded-full bg-stone-100 overflow-hidden">
           <div
             className="h-full rounded-full bg-indigo-400 transition-all duration-500"
-            style={{ width: `${Math.round((currentStepIndex / (totalSteps - 1)) * 100)}%` }}
+            style={{ width: `${Math.round((Math.min(currentStepIndex + 1, totalSteps - 1) / (totalSteps - 1)) * 100)}%` }}
           />
         </div>
         <span className="text-xs text-stone-400 tabular-nums shrink-0">
