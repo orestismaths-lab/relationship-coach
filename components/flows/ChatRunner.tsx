@@ -309,11 +309,14 @@ export function ChatRunner({ flow, sessionId, initialStep, totalSteps }: Props) 
 
         if (nextStep) {
           const stepT = getStepT(flow.id, nextStep.id, lang)
-          const question = stepT?.question ?? nextStep.question
-          setMessages((m) => [
-            ...m.filter((x) => x.role !== 'spinner'),
-            { role: 'ai', content: question, step: nextStep },
-          ])
+          const question: string = data.question ?? stepT?.question ?? nextStep.question
+          const acknowledgment: string | undefined = data.acknowledgment
+          setMessages((m) => {
+            const base = m.filter((x) => x.role !== 'spinner')
+            if (acknowledgment) base.push({ role: 'ai', content: acknowledgment, step: nextStep })
+            base.push({ role: 'ai', content: question, step: nextStep })
+            return base
+          })
           setCurrentStepIndex(data.currentStep)
         }
       }

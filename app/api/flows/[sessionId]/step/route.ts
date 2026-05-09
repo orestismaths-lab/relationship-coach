@@ -9,6 +9,8 @@ import { safetyCheck, getSafetyMessage, getConversationSafetyMessage } from '@/l
 import { generateAI } from '@/lib/ai/client'
 import { checkAndIncrementUsage } from '@/lib/usage'
 import { buildUserHistoryContext } from '@/lib/ai/userContext'
+import { generateInterviewStep } from '@/lib/ai/interviewStep'
+import { getStepT } from '@/lib/i18n/flowTranslations'
 import type { PromptKey } from '@/lib/ai/prompts'
 import type { SessionAnswers } from '@/types'
 import type { Lang } from '@/lib/i18n/translations'
@@ -111,10 +113,21 @@ export async function POST(
     const userHistory = buildUserHistoryContext(pastSessions)
 
     let result
-    try {
-      result = await generateAI(stepDef.aiPromptKey as PromptKey, allAnswers, lang, userHistory)
-    } catch (err) {
-      console.error('[step/summary] generateAI failed:', err instanceof Error ? err.message : String(err))
+    let lastErr: unknown
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        result = await generateAI(stepDef.aiPromptKey as PromptKey, allAnswers, lang, userHistory)
+        lastErr = undefined
+        break
+      } catch (err) {
+        lastErr = err
+        console.error(`[step/summary] generateAI attempt ${attempt + 1} failed:`, err instanceof Error ? err.message : String(err))
+        if (err instanceof Error && (err.message.includes('401') || err.message.includes('403'))) break
+      }
+    }
+    if (lastErr !== undefined || !result) {
+      const msg = lastErr instanceof Error ? lastErr.message : String(lastErr)
+      console.error('[step/summary] all attempts failed:', msg)
       return Response.json({ error: 'Could not generate reflection. Please try again.' }, { status: 500 })
     }
 
@@ -153,6 +166,29 @@ export async function POST(
       answers: serialized.answers,
     },
   })
+
+  // Generate personalized acknowledgment + next question when answers exist
+  const nextStep = flow.steps[newState.currentStep]
+  const hasAnswers = Object.keys(state.answers).length > 0
+  if (nextStep && nextStep.type !== 'summary' && hasAnswers) {
+    const nextStepT = getStepT(flow.id, nextStep.id, lang)
+    const staticQuestion = nextStepT?.question ?? nextStep.question
+    const allAnswersSoFar = { ...state.answers, [stepId]: answer }
+    const { acknowledgment, question } = await generateInterviewStep({
+      flowTitle: flow.title,
+      answers: allAnswersSoFar as Record<string, unknown>,
+      nextQuestion: staticQuestion,
+      nextStepId: nextStep.id,
+      lang,
+    })
+    return Response.json({
+      type: 'next',
+      currentStep: newState.currentStep,
+      total: newState.totalSteps,
+      acknowledgment,
+      question,
+    })
+  }
 
   return Response.json({
     type: 'next',

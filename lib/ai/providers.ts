@@ -65,7 +65,8 @@ async function callOpenAI(userPrompt: string, maxTokens: number): Promise<string
 
   if (!res.ok) {
     const body = await res.text().catch(() => '')
-    throw new Error(`OpenAI API error ${res.status}: ${body}`)
+    console.error(`[OpenAI] ${res.status} response:`, body.slice(0, 500))
+    throw new Error(`OpenAI API error ${res.status}: ${body.slice(0, 300)}`)
   }
 
   const data = await res.json()
