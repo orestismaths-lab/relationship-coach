@@ -165,11 +165,14 @@ Return a JSON object matching this schema exactly:
 
 // ─── Public interface ─────────────────────────────────────────────────────────
 
-export function buildPrompt(key: PromptKey, answers: SessionAnswers): string {
+export function buildPrompt(key: PromptKey, answers: SessionAnswers, userHistory?: string): string {
+  let prompt: string
   switch (key) {
-    case 'understand_summary': return buildUnderstandPrompt(answers)
-    case 'prepare_summary':    return buildPreparePrompt(answers)
-    case 'decide_summary':     return buildDecidePrompt(answers)
+    case 'understand_summary': prompt = buildUnderstandPrompt(answers); break
+    case 'prepare_summary':    prompt = buildPreparePrompt(answers);    break
+    case 'decide_summary':     prompt = buildDecidePrompt(answers);     break
     default: throw new Error(`Unknown prompt key: ${key}`)
   }
+  if (!userHistory) return prompt
+  return prompt.replace('--- Instructions ---', `${userHistory}\n\n--- Instructions ---`)
 }

@@ -8,6 +8,7 @@ import { deserializeState, serializeState, advanceStep, recordAIOutput } from '@
 import { safetyCheck, getSafetyMessage, getConversationSafetyMessage } from '@/lib/ai/safety'
 import { generateAI } from '@/lib/ai/client'
 import { checkAndIncrementUsage } from '@/lib/usage'
+import { buildUserHistoryContext } from '@/lib/ai/userContext'
 import type { PromptKey } from '@/lib/ai/prompts'
 import type { SessionAnswers } from '@/types'
 import type { Lang } from '@/lib/i18n/translations'
@@ -100,9 +101,18 @@ export async function POST(
     const allAnswers: SessionAnswers = { ...state.answers }
     if (answer !== '') allAnswers[stepId] = answer
 
+    // Fetch user's past completed sessions for personalized context
+    const pastSessions = await prisma.flowSession.findMany({
+      where: { userId: session.user.id, status: 'COMPLETED', id: { not: sessionId } },
+      orderBy: { completedAt: 'desc' },
+      take: 5,
+      select: { flowId: true, answers: true, aiOutputs: true, completedAt: true, createdAt: true, title: true },
+    })
+    const userHistory = buildUserHistoryContext(pastSessions)
+
     let result
     try {
-      result = await generateAI(stepDef.aiPromptKey as PromptKey, allAnswers, lang)
+      result = await generateAI(stepDef.aiPromptKey as PromptKey, allAnswers, lang, userHistory)
     } catch {
       return Response.json({ error: 'Could not generate reflection. Please try again.' }, { status: 500 })
     }

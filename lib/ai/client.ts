@@ -59,7 +59,8 @@ export type GenerationResult =
 export async function generateAI(
   key: PromptKey,
   answers: SessionAnswers,
-  lang: Lang = 'en'
+  lang: Lang = 'en',
+  userHistory?: string
 ): Promise<GenerationResult> {
   const s = translations[lang].safety
   // Safety classification — runs before any generation, including mock
@@ -79,7 +80,7 @@ export async function generateAI(
 
   const provider = getProvider()
   const maxTokens = getMaxTokens()
-  const userPrompt = buildPrompt(key, answers)
+  const userPrompt = buildPrompt(key, answers, userHistory)
 
   let rawText: string
   try {
