@@ -113,7 +113,8 @@ export async function POST(
     let result
     try {
       result = await generateAI(stepDef.aiPromptKey as PromptKey, allAnswers, lang, userHistory)
-    } catch {
+    } catch (err) {
+      console.error('[step/summary] generateAI failed:', err instanceof Error ? err.message : String(err))
       return Response.json({ error: 'Could not generate reflection. Please try again.' }, { status: 500 })
     }
 
